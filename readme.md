@@ -1,4 +1,4 @@
-# \Group 7\ Scrum Team
+# Group 7 Scrum Team
 ## Product Owner
 \
 ## Scrum Master
