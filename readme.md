@@ -1,6 +1,6 @@
-# \<Project Name\> Scrum Team
+# \Group 7\ Scrum Team
 ## Product Owner
-\<Team Member Name\>
+\
 ## Scrum Master
 \<Team Member Name\>
 ## Developers
