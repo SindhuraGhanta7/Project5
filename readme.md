@@ -1,9 +1,9 @@
 # Group 7 Scrum Team
 ## Product Owner
-\
+Sindhura Ghanta
 ## Scrum Master
-\<Team Member Name\>
+Puneeth Pemmasani
 ## Developers
-- \<Team Member Name\>
-- \<Team Member Name\>
-- \<Team Member Name\>
+- Aakash Vidiyala
+- Shipra Shipra
+- Takudzwa Mujuru
