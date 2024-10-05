@@ -4,47 +4,59 @@ import {
   List,
   ListItem,
   ListItemText,
-  Typography,
-}
-from '@mui/material';
+} from '@mui/material';
 import './userList.css';
+import FetchModel from '../../lib/fetchModelData';
 
-/**
- * Define UserList, a React component of project #5
- */
+
 class UserList extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      userList: [],
+    };
+  }
+
+  componentDidMount() {
+    // Use FetchModel to get the list of users
+    FetchModel('/user/list')
+      .then((response) => {
+        const userList = response.data;
+        this.setState({ userList });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  handleUserClick(userId) {
+    // Navigate to the relative URL
+    window.location.href = `/photo-share.html#/users/${userId}`;
+    window.location.reload();
   }
 
   render() {
+    const { userList } = this.state;
     return (
-      <div>
-        <Typography variant="body1">
-          This is the user list, which takes up 3/12 of the window.
-          You might choose to use <a href="https://mui.com/components/lists/">Lists</a> and <a href="https://mui.com/components/dividers/">Dividers</a> to
-          display your users like so:
-        </Typography>
+      <div className="user-list-container">
         <List component="nav">
-          <ListItem>
-            <ListItemText primary="Item #1" />
-          </ListItem>
-          <Divider />
-          <ListItem>
-            <ListItemText primary="Item #2" />
-          </ListItem>
-          <Divider />
-          <ListItem>
-            <ListItemText primary="Item #3" />
-          </ListItem>
-          <Divider />
+          {userList.map((user, index) => (
+            <div key={index}>
+              <ListItem
+                button
+                onClick={() => this.handleUserClick(user._id)}
+                className="list-item"
+              >
+                <ListItemText primary={`${user.first_name} ${user.last_name}`} />
+              </ListItem>
+              {index < userList.length - 1 && <Divider className="divider" />}
+            </div>
+          ))}
         </List>
-        <Typography variant="body1">
-          The model comes in from window.models.userListModel()
-        </Typography>
       </div>
     );
   }
 }
 
 export default UserList;
+
