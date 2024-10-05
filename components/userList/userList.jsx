@@ -4,68 +4,59 @@ import {
   List,
   ListItem,
   ListItemText,
-  Typography,
 } from '@mui/material';
-import fetchModel from '../lib/fetchModelData.js'; 
 import './userList.css';
+import FetchModel from '../../lib/fetchModelData';
 
-/**
- * Define UserList, a React component of project #5
- */
+
 class UserList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      users: [], 
-      loading: true, 
-      error: null, 
+      userList: [],
     };
   }
 
   componentDidMount() {
-    fetchModel('/user/list')
-      .then(response => {
-        this.setState({ users: response.data, loading: false });
+    // Use FetchModel to get the list of users
+    FetchModel('/user/list')
+      .then((response) => {
+        const userList = response.data;
+        this.setState({ userList });
       })
-      .catch(error => {
-        this.setState({ loading: false, error });
+      .catch((error) => {
+        console.error(error);
       });
   }
 
+  handleUserClick(userId) {
+    // Navigate to the relative URL
+    window.location.href = `/photo-share.html#/users/${userId}`;
+    window.location.reload();
+  }
+
   render() {
-    const { users, loading, error } = this.state;
-
-    if (loading) {
-      return <Typography variant="body1">Loading users...</Typography>;
-    }
-
-    if (error) {
-      return <Typography variant="body1">Error loading users: {error.statusText}</Typography>;
-    }
-
+    const { userList } = this.state;
     return (
-      <div>
-        <Typography variant="body1">
-          This is the user list, which takes up 3/12 of the window.
-          You might choose to use <a href="https://mui.com/components/lists/">Lists</a> and <a href="https://mui.com/components/dividers/">Dividers</a> to
-          display your users like so:
-        </Typography>
+      <div className="user-list-container">
         <List component="nav">
-          {users.map(user => (
-            <div key={user._id}>
-              <ListItem>
+          {userList.map((user, index) => (
+            <div key={index}>
+              <ListItem
+                button
+                onClick={() => this.handleUserClick(user._id)}
+                className="list-item"
+              >
                 <ListItemText primary={`${user.first_name} ${user.last_name}`} />
               </ListItem>
-              <Divider />
+              {index < userList.length - 1 && <Divider className="divider" />}
             </div>
           ))}
         </List>
-        <Typography variant="body1">
-          The model now comes from the server.
-        </Typography>
       </div>
     );
   }
 }
 
 export default UserList;
+
