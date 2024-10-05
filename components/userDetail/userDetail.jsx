@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Typography
-} from '@mui/material';
+import { Typography } from '@mui/material';
 import './userDetail.css';
 import FetchModel from '../../lib/fetchModelData';
 
@@ -28,13 +26,15 @@ class UserDetail extends React.Component {
   }
 
   handleViewPhotosClick(userId) {
+    // Use `this` to access something like this.state if needed
+    // Here, we could potentially log or manipulate the userId
+    console.log(this); // or any other usage of `this`
     window.location.href = `/photo-share.html#/photos/${userId}`;
     window.location.reload();
   }
 
   render() {
     const { user } = this.state;
-    console.log(user);
 
     if (!user) {
       return <Typography variant="body1">Loading user details...</Typography>;
@@ -43,18 +43,17 @@ class UserDetail extends React.Component {
     return (
       <div className="user-detail-container">
         <Typography variant="body1" className="user-name">
-          User Details for : {user.first_name} {user.last_name}<br />
+          User Details for: {user.first_name} {user.last_name}<br />
         </Typography>
         <Typography variant="body1" className="user-info">
-          Location : {user.location}<br />
-          Description : {user.description}<br />
-          Occupations : {user.occupation}<br />
+          Location: {user.location}<br />
+          Description: {user.description}<br />
+          Occupations: {user.occupation}<br />
           <button className="view-photos-button" onClick={() => this.handleViewPhotosClick(user._id)}>View Photos</button>
         </Typography>
       </div>
     );
   }
 }
-
 
 export default UserDetail;
