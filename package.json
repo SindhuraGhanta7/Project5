@@ -9,9 +9,13 @@
     "build:w": "webpack --devtool eval-cheap-module-source-map --output-pathinfo --watch",
     "lint": "eslint *.jsx components/*/*.jsx || exit 0"
   },
-  "author": "Mendel Rosenblum <mendel@cs.stanford.edu> ",
+  "author": "Mendel Rosenblum <mendel@cs.stanford.edu>",
   "contributors": [
-    "Todd Dobbs <btdobbs@uncc.edu> (https://orcid.org/0000-0001-6711-6962)"
+    {
+      "name": "Todd Dobbs",
+      "email": "btdobbs@uncc.edu",
+      "url": "https://orcid.org/0000-0001-6711-6962"
+    }
   ],
   "license": "ISC",
   "dependencies": {
@@ -57,5 +61,9 @@
   },
   "overrides": {
     "core-js": "3.22.3"
-  }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "keywords": []
 }
