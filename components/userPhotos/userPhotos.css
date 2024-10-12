@@ -1,0 +1,60 @@
+
+/* userPhotos.css */
+.root {
+    display: grid;
+    grid-template-columns: repeat(3);
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .card {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    cursor: pointer;
+  }
+  
+  .card:hover {
+    transform: scale(1.05);
+  }
+  
+  .media.contain-background {
+    padding-top: 100%; /* 1:1 aspect ratio */
+    background-position: center;
+    background-size: contain;
+    object-fit: contain;
+  }
+
+  .back-button{
+    display: block;
+    margin-top: 20px;
+    background-color: #00b392;;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    height: 40px;
+    width: 180px;
+    cursor: pointer;
+    grid-row: 1; 
+    grid-column: 1;
+  }
+
+.photo-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px; 
+}
+  @media (min-width: 768px) {
+    .root {
+      padding: 20px 40px;
+    }
+  }
+
+  img{
+    object-fit: none;
+  }
+  
+  
