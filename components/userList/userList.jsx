@@ -6,7 +6,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import './userList.css';
-import FetchModel from '../../lib/fetchModelData';
+import axios from 'axios';
 
 class UserList extends React.Component {
   constructor(props) {
@@ -22,19 +22,17 @@ class UserList extends React.Component {
 
   componentDidMount() {
     // Fetch the list of users when the component mounts
-    this.fetchUserList();
+    this.handleUserListChange();
   }
 
-  fetchUserList() {
-    FetchModel('/user/list')
-      .then((response) => {
-        const userList = response.data;
-        this.setState({ userList });
-      })
-      .catch((error) => {
-        console.error('Error fetching user list:', error);
-        this.setState({ error: 'Failed to load user list.' }); // Set error state
-      });
+  handleUserListChange(){
+    axios.get("/user/list")
+        .then((response) =>
+        {
+            this.setState({
+                users: response.data
+            });
+        });
   }
 
   handleUserClick(userId) {
@@ -54,25 +52,23 @@ class UserList extends React.Component {
   }
 
   render() {
-    const { userList, error } = this.state;
-    return (
-      <div className="user-list-container">
-        {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error if present */}
+    return this.state.users ?(
+        <div>
         <List component="nav">
-          {userList.map((user, index) => (
-            <div key={user._id}> {/* Use user._id as key instead of index */}
-              <ListItem
-                button
-                onClick={() => this.handleUserClick(user._id)} // Uses this
-                className="list-item"
-              >
-                <ListItemText primary={`${user.first_name} ${user.last_name}`} />
-              </ListItem>
-              {index < userList.length - 1 && <Divider className="divider" />}
-            </div>
-          ))}
+            {
+                this.state.users.map(user => (
+                <ListItemButton selected={this.state.user_id === user._id}
+                                key={user._id}
+                                divider={true}
+                                component="a" href={"#/users/" + user._id}>
+                    <ListItemText primary={user.first_name + " " + user.last_name} />
+                </ListItemButton>
+            ))
+            }
         </List>
-      </div>
+        </div>
+    ) : (
+        <div/>
     );
   }
 }

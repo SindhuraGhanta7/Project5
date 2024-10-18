@@ -143,7 +143,27 @@ app.get("/test/:p1", function (request, response) {
  * URL /user/list - Returns all the User objects.
  */
 app.get("/user/list", function (request, response) {
-  response.status(200).send(models.userListModel());
+
+  // Get all users
+  User.find({}, function (err, users) {
+    if (err) {
+      console.error("Error in /user/list:", err);
+      response.status(400).send(JSON.stringify(err));
+      return;
+    }
+    if (users.length === 0) {
+      response.status(400).send("Missing Users Info");
+      return;
+    }
+
+    // Convert user objects to objects with only id, first_name, and last_name
+    const userList = users.map(user => ({
+      _id: user._id.toString(),  // Convert ObjectId to string explicitly if necessary
+      first_name: user.first_name,
+      last_name: user.last_name
+    }));
+    response.end(JSON.stringify(userList, null, 4));
+  });
 });
 
 /**
@@ -151,28 +171,101 @@ app.get("/user/list", function (request, response) {
  */
 app.get("/user/:id", function (request, response) {
   const id = request.params.id;
-  const user = models.userModel(id);
-  if (user === null) {
-    console.log("User with _id:" + id + " not found.");
-    response.status(400).send("Not found");
-    return;
-  }
-  response.status(200).send(user);
+
+  // Corrected to use findById for a more appropriate query by _id
+  User.findById(id, {__v: 0}, function (err, user) {
+    if (err) {
+      // Handle errors from the database
+      console.error("Error in /user/:id", err);
+      response.status(400).send(JSON.stringify(err));
+      return;
+    }
+    if (!user) {
+      // No user found with the provided id
+      response.status(400).send("User not found");
+      return;
+    }
+    // Successfully found the user, return the user data
+    response.json(user);  // Simplified, no need to pick the first item from an array
+  });
 });
+
 
 /**
  * URL /photosOfUser/:id - Returns the Photos for User (id).
  */
 app.get("/photosOfUser/:id", function (request, response) {
-  const id = request.params.id;
-  const photos = models.photoOfUserModel(id);
-  if (photos.length === 0) {
-    console.log("Photos for user with _id:" + id + " not found.");
-    response.status(400).send("Not found");
-    return;
+  const userId = request.params.id;
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return response.status(400).send("Invalid user ID format.");
   }
-  response.status(200).send(photos);
+
+  Photo.aggregate([
+    // Filter to match photos by user ID
+    { $match: { user_id: mongoose.Types.ObjectId(userId) } },
+
+    // Ensure comments array exists
+    { $addFields: { comments: { $ifNull: ["$comments", []] } } },
+
+    // Join with users collection to fetch user details for each comment
+    { $lookup: {
+        from: "users",
+        localField: "comments.user_id",
+        foreignField: "_id",
+        as: "commentUsers"
+      } },
+
+    // Add user details to each comment
+    { $addFields: {
+        comments: {
+          $map: {
+            input: "$comments",
+            as: "comment",
+            in: {
+              $mergeObjects: [
+                "$$comment",
+                { user: {
+                    $first: {
+                      $filter: {
+                        input: "$commentUsers",
+                        as: "commentUser",
+                        cond: { $eq: ["$$commentUser._id", "$$comment.user_id"] }
+                      }
+                    }
+                  } }
+              ]
+            }
+          }
+        }
+      } },
+
+    // Project required fields, excluding unnecessary ones
+    { $project: {
+        commentUsers: 0,
+        __v: 0,
+        "comments.__v": 0,
+        "comments.user_id": 0,
+        "comments.user.description": 0,
+        "comments.user.location": 0,
+        "comments.user.occupation": 0,
+        "comments.user.__v": 0
+      } }
+  ]).exec((err, photos) => {
+    if (err) {
+      console.error("Error retrieving photos for user:", err);
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+    if (photos.length === 0) {
+      response.status(404).send("No photos found for this user.");
+      return;
+    }
+    response.json(photos);  // Using response.json for automatic JSON.stringify and correct headers
+  });
 });
+
+
+
 
 const server = app.listen(3000, function () {
   const port = server.address().port;
