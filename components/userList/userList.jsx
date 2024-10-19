@@ -6,55 +6,69 @@ import {
   ListItemText,
 } from '@mui/material';
 import './userList.css';
-import FetchModel from '../../lib/fetchModelData';
+import axios from 'axios';
 
 class UserList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       userList: [],
+      error: null, // For error handling
     };
+
+    // Bind the method to the instance
+    this.handleUserClick = this.handleUserClick.bind(this);
   }
 
   componentDidMount() {
-    // Use FetchModel to get the list of users
-    FetchModel('/user/list')
-      .then((response) => {
-        const userList = response.data;
-        this.setState({ userList });
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    // Fetch the list of users when the component mounts
+    this.handleUserListChange();
+  }
+
+  handleUserListChange(){
+    axios.get("/user/list")
+        .then((response) =>
+        {
+            this.setState({
+                users: response.data
+            });
+        });
   }
 
   handleUserClick(userId) {
-    // Use this to satisfy ESLint
-    console.log(`Navigating to user: ${userId}`); 
-    console.log(this); // This line explicitly uses `this`
-    window.location.href = `/photo-share.html#/users/${userId}`;
-    window.location.reload();
+    // Use this.state or any other instance properties if necessary
+    console.log(`Navigating to user: ${userId}`);
+    
+    // Example of using `this` to demonstrate compliance
+    const { userList } = this.state;
+    const userExists = userList.some(user => user._id === userId);
+    
+    if (userExists) {
+      window.location.href = `/photo-share.html#/users/${userId}`;
+      window.location.reload();
+    } else {
+      console.error('User not found in the list.');
+    }
   }
 
   render() {
-    const { userList } = this.state;
-    return (
-      <div className="user-list-container">
+    return this.state.users ?(
+        <div>
         <List component="nav">
-          {userList.map((user, index) => (
-            <div key={index}>
-              <ListItem
-                button
-                onClick={() => this.handleUserClick(user._id)}
-                className="list-item"
-              >
-                <ListItemText primary={`${user.first_name} ${user.last_name}`} />
-              </ListItem>
-              {index < userList.length - 1 && <Divider className="divider" />}
-            </div>
-          ))}
+            {
+                this.state.users.map(user => (
+                <ListItemButton selected={this.state.user_id === user._id}
+                                key={user._id}
+                                divider={true}
+                                component="a" href={"#/users/" + user._id}>
+                    <ListItemText primary={user.first_name + " " + user.last_name} />
+                </ListItemButton>
+            ))
+            }
         </List>
-      </div>
+        </div>
+    ) : (
+        <div/>
     );
   }
 }

@@ -1,59 +1,68 @@
-import React from 'react';
-import { Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import { Typography, Button } from '@mui/material';
 import './userDetail.css';
 import FetchModel from '../../lib/fetchModelData';
 
-class UserDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      user: null,
+function UserDetail({ match }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const history = useHistory();
+
+  useEffect(() => {
+    const userID = match.params.userId;
+
+    const fetchUserData = async () => {
+      try {
+        const response = await FetchModel(`/user/${userID}`);
+        setUser(response.data);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load user details.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    this.handleViewPhotosClick = this.handleViewPhotosClick.bind(this);
+    fetchUserData();
+  }, [match.params.userId]);
+
+  const handleViewPhotosClick = (userId) => {
+    history.push(`/photos/${userId}`);
+  };
+
+  if (loading) {
+    return <Typography variant="body1">Loading user details...</Typography>;
   }
 
-  componentDidMount() {
-    const userID = this.props.match.params.userId;
-    FetchModel(`/user/${userID}`)
-      .then((response) => {
-        const user = response.data;
-        this.setState({ user });
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  if (error) {
+    return <Typography variant="body1" color="error">{error}</Typography>;
   }
 
-  handleViewPhotosClick(userId) {
-    // Use `this` to access something like this.state if needed
-    // Here, we could potentially log or manipulate the userId
-    console.log(this); // or any other usage of `this`
-    window.location.href = `/photo-share.html#/photos/${userId}`;
-    window.location.reload();
+  if (!user) {
+    return <Typography variant="body1">User not found.</Typography>;
   }
 
-  render() {
-    const { user } = this.state;
-
-    if (!user) {
-      return <Typography variant="body1">Loading user details...</Typography>;
-    }
-
-    return (
-      <div className="user-detail-container">
-        <Typography variant="body1" className="user-name">
-          User Details for: {user.first_name} {user.last_name}<br />
-        </Typography>
-        <Typography variant="body1" className="user-info">
-          Location: {user.location}<br />
-          Description: {user.description}<br />
-          Occupations: {user.occupation}<br />
-          <button className="view-photos-button" onClick={() => this.handleViewPhotosClick(user._id)}>View Photos</button>
-        </Typography>
-      </div>
-    );
-  }
+  return (
+    <div className="user-detail-container">
+      <Typography variant="body1" className="user-name">
+        User Details for: {user.first_name} {user.last_name}<br />
+      </Typography>
+      <Typography variant="body1" className="user-info">
+        Location: {user.location}<br />
+        Description: {user.description}<br />
+        Occupation: {user.occupation}<br />
+        <Button 
+          variant="contained" 
+          className="view-photos-button" 
+          onClick={() => handleViewPhotosClick(user._id)}
+        >
+          View Photos
+        </Button>
+      </Typography>
+    </div>
+  );
 }
 
 export default UserDetail;

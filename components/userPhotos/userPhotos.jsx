@@ -1,80 +1,103 @@
 import React from 'react';
 import {
-  Typography, Card, CardContent, CardMedia
+  Button, TextField,
+  ImageList, ImageListItem
 } from '@mui/material';
 import './userPhotos.css';
-import FetchModel from '../../lib/fetchModelData';
+import axios from 'axios';
+
 
 /**
- * Define UserPhotos, a React component of project #5
+ * Define UserPhotos, a React componment of project #5
  */
 class UserPhotos extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      userPhotos: [],
-    };
-  }
+    constructor(props) {
+        super(props);
+        this.state = {
+            user_id : undefined,
+            photos: undefined
+        };
+    }
 
-  componentDidMount() {
-    const userId = this.props.match.params.userId;
+    componentDidMount() {
+        const new_user_id = this.props.match.params.userId;
+        this.handleUserChange(new_user_id);
+    }
 
-    // Use FetchModel to get user photos.
-    FetchModel(`/photosOfUser/${userId}`)
-      .then((response) => {
-        const userPhotos = response.data;
-        this.setState({ userPhotos });
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
+    componentDidUpdate() {
+        const new_user_id = this.props.match.params.userId;
+        const current_user_id = this.state.user_id;
+        if (current_user_id  !== new_user_id){
+            this.handleUserChange(new_user_id);
+        }
+    }
 
-  handleViewBackToList() {
-    const userId = this.props.match.params.userId;
-    window.location.href = `/photo-share.html#/users/${userId}`;
-    window.location.reload();
-  }
+    handleUserChange(user_id){
+        axios.get("/photosOfUser/" + user_id)
+            .then((response) =>
+            {
+                this.setState({
+                    user_id : user_id,
+                    photos: response.data
+                });
+            });
+        axios.get("/user/" + user_id)
+            .then((response) =>
+            {
+                const new_user = response.data;
+                const main_content = "User Photos for " + new_user.first_name + " " + new_user.last_name;
+                this.props.changeMainContent(main_content);
+            });
+    }
 
-  render() {
-    const { userPhotos } = this.state;
-
-    return (
-      <div className="root">
-        <button
-        className= "back-button"
-        color="primary"
-        onClick={() => this.handleViewBackToList()}
-        >
-        Back to User Info
-        </button>
-        <div className= "photo-grid">
-            {userPhotos.map((photo, index) => (
-              <Card key={index} className="card">
-                <CardMedia
-                  className="media contain-background"
-                  image={`images/${photo.file_name}`}
-                  title={`Photo ${index + 1}`}
-                />
-                <CardContent>
-                  <Typography variant="caption">Photo {index + 1}</Typography>
-                  <Typography variant="body2">Date: {photo.date_time}</Typography>
-                  {photo.comments && photo.comments.length > 0 && (
-                    <div className="comment-list">
-                      {photo.comments.map((comment, commentIndex) => (
-                        <div key={commentIndex} className="comment">
-                          <strong>{comment.user.first_name} {comment.user.last_name}:</strong> {comment.comment}
+    render() {
+        return this.state.user_id ? (
+            <div>
+                <div>
+                    <Button variant="contained" component="a" href={"#/users/" + this.state.user_id}>
+                        User Detail
+                    </Button>
+                </div>
+                <ImageList variant="masonry" cols={1} gap={8}>
+                    {this.state.photos.map((item) => (
+                        <div key={item._id}>
+                            <TextField id="date" label="Photo Date" variant="outlined" disabled fullWidth margin="normal"
+                                       value={item.date_time} />
+                            <ImageListItem key={item.file_name}>
+                                <img
+                                    src={`images/${item.file_name}`}
+                                    srcSet={`images/${item.file_name}`}
+                                    alt={item.file_name}
+                                    loading="lazy"
+                                />
+                            </ImageListItem>
+                            {item.comments ?
+                                item.comments.map((comment) => (
+                                    <div key={comment._id}>
+                                        <TextField id="date" label="Comment Date" variant="outlined" disabled fullWidth
+                                                   margin="normal" value={comment.date_time} />
+                                        <TextField id="user" label="User" variant="outlined" disabled fullWidth
+                                                   margin="normal"
+                                                   value={comment.user.first_name + " " + comment.user.last_name}
+                                                   component="a" href={"#/users/" + comment.user._id}>
+                                        </TextField>
+                                        <TextField id="comment" label="Comment" variant="outlined" disabled fullWidth
+                                                   margin="normal" multiline rows={4} value={comment.comment} />
+                                    </div>
+                                ))
+                                : (
+                                    <div>
+                                        <TextField id="comment" label="No Comments" variant="outlined" disabled fullWidth
+                                                   margin="normal" />
+                                    </div>
+                                )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-        </div>
-      </div>
-    );
-  }
+                    ))}
+                </ImageList>
+            </div>
+        ) : (
+            <div/>
+        );
+    }
 }
-
 export default UserPhotos;
