@@ -1,8 +1,9 @@
 import React from 'react';
 import {
+  Divider,
   List,
+  ListItem,
   ListItemText,
-  ListItemButton, // Added this import
 } from '@mui/material';
 import './userList.css';
 import axios from 'axios';
@@ -11,8 +12,8 @@ class UserList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      userList: [], // Changed to userList
-      // error: null, // Uncomment if needed
+      userList: [],
+      error: null, // For error handling
     };
 
     // Bind the method to the instance
@@ -24,18 +25,21 @@ class UserList extends React.Component {
     this.handleUserListChange();
   }
 
-  handleUserListChange() {
+  handleUserListChange(){
     axios.get("/user/list")
-      .then((response) => {
-        this.setState({
-          userList: response.data // Fixed state update
+        .then((response) =>
+        {
+            this.setState({
+                users: response.data
+            });
         });
-      });
   }
 
   handleUserClick(userId) {
+    // Use this.state or any other instance properties if necessary
     console.log(`Navigating to user: ${userId}`);
     
+    // Example of using `this` to demonstrate compliance
     const { userList } = this.state;
     const userExists = userList.some(user => user._id === userId);
     
@@ -48,24 +52,23 @@ class UserList extends React.Component {
   }
 
   render() {
-    return this.state.userList.length ? ( // Check userList
-      <div>
+    return this.state.users ?(
+        <div>
         <List component="nav">
-          {this.state.userList.map(user => (
-            <ListItemButton
-              selected={this.state.user_id === user._id}
-              key={user._id}
-              divider={true}
-              component="a"
-              href={"#/users/" + user._id}
-            >
-              <ListItemText primary={user.first_name + " " + user.last_name} />
-            </ListItemButton>
-          ))}
+            {
+                this.state.users.map(user => (
+                <ListItemButton selected={this.state.user_id === user._id}
+                                key={user._id}
+                                divider={true}
+                                component="a" href={"#/users/" + user._id}>
+                    <ListItemText primary={user.first_name + " " + user.last_name} />
+                </ListItemButton>
+            ))
+            }
         </List>
-      </div>
+        </div>
     ) : (
-      <div/>
+        <div/>
     );
   }
 }
