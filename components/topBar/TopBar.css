@@ -1,5 +1,6 @@
 /* CSS */
 .topbar-appBar {
-  height: 60;
-  justify-content: 'center';
+  height: 60px; /* Add units to height */
+  display: flex; /* Ensure flexbox is used */
+  justify-content: center; /* Correct syntax */
 }

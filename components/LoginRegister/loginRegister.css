@@ -1,0 +1,40 @@
+.login-register {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.login-register h4 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.login-register form {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-register .MuiTextField-root {
+    margin-bottom: 16px;
+}
+
+.login-register .MuiButton-root {
+    margin-top: 10px;
+}
+
+.error {
+    color: #f44336;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Add responsive adjustments */
+@media (max-width: 480px) {
+    .login-register {
+        width: 90%; /* Make it full width on small screens */
+    }
+}

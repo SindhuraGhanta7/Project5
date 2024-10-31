@@ -8,18 +8,19 @@ function TopBar() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userId = window.location.href.split('/').pop();
-
-    FetchModel(`/user/${userId}`)
-      .then(response => {
+    // Fetch the current user data
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await FetchModel('/admin/current_user');
         setUser(response.data);
-      })
-      .catch(error => {
-        console.error("Error fetching user data:", error);
-      })
-      .finally(() => {
+      } catch (error) {
+        console.error("Error fetching current user data:", error);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchCurrentUser();
   }, []);
 
   if (loading) {
@@ -27,10 +28,10 @@ function TopBar() {
   }
 
   const userName = user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
-  const occupation = user ? user.occupation : 'Occupation not specified';
+  const occupation = user ? user.occupation || 'Occupation not specified' : 'Occupation not specified';
   const currentPath = window.location.href;
-  const headingText = currentPath.includes('/photos/') 
-    ? `Photos of ${userName}` 
+  const headingText = currentPath.includes('/photos/')
+    ? `Photos of ${userName}`
     : `Details of ${userName}`;
 
   return (

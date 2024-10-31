@@ -1,7 +1,7 @@
 /*
 CSS for the project #5 main page
 
-Since CSS uses a global name space for classes we should use class names starting with
+Since CSS uses a global namespace for classes, we should use class names starting with
 main- here.
 */
 
@@ -35,44 +35,54 @@ main- here.
 }
 
 /* Style the UserList component */
-.user-list-container {
+.main-user-list-container {
   overflow-y: auto; /* Add a vertical scrollbar if the content overflows */
   max-height: 80vh; /* Limit the height of the user list */
 }
 
 /* Style individual list items */
-.list-item {
+.main-list-item {
   cursor: pointer; /* Change cursor to pointer on hover */
   transition: background-color 0.3s;
 }
 
-.list-item:hover {
+.main-list-item:hover {
   background-color: #e0e0e0; /* Light gray background on hover */
 }
 
 /* Style the TopBar */
-.topbar-appBar {
-  background-color: #00b392 !important
+.main-topbar-appBar {
+  background-color: #00b392 !important;
 }
 
-.topbar-name {
+.main-topbar-name {
   font-size: 28px;
   font-weight: bold;
   color: #fff; /* White text color */
   margin-right: 10px;
 }
 
-.topbar-heading {
+.main-topbar-heading {
   font-size: 20px;
   color: #fff; /* White text color */
 }
 
-/* Style the UserDetail and UserPhotos components (you can customize further) */
-.user-detail-container,
-.user-photos-container {
+/* Style the UserDetail and UserPhotos components */
+.main-user-detail-container,
+.main-user-photos-container {
   padding: 20px;
   background-color: #fff; /* White background */
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* Additional styles for buttons */
+.main-button {
+  margin-top: 10px;
+  background-color: #00b392; /* Match the top bar color */
+  color: #fff; /* White text */
+}
+
+.main-button:hover {
+  background-color: #009f7f; /* Darker shade on hover */
+}

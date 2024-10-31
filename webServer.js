@@ -32,11 +32,11 @@
  */
 
 const mongoose = require("mongoose");
-mongoose.Promise = require("bluebird");
-
+const bcrypt = require("bcrypt");
 const async = require("async");
-
 const express = require("express");
+const session = require("express-session");
+const path = require('path');
 const app = express();
 
 // Load the Mongoose schema for User, Photo, and SchemaInfo
@@ -44,110 +44,159 @@ const User = require("./schema/user.js");
 const Photo = require("./schema/photo.js");
 const SchemaInfo = require("./schema/schemaInfo.js");
 
-// XXX - Your submission should work without this line. Comment out or delete
-// this line for tests and before submission!
-// const models = require("./modelData/photoApp.js").models; // Keeping this for context, though it's unused
+// Set Mongoose options
 mongoose.set("strictQuery", false);
 mongoose.connect("mongodb://127.0.0.1/project6", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-// We have the express static module
-// (http://expressjs.com/en/starter/static-files.html) do all the work for us.
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+// Session management
+app.use(session({
+  secret: 'your-secret-key', // Change this to a secure secret
+  resave: false,
+  saveUninitialized: true,
+}));
+
+// Serve static files from the current directory
 app.use(express.static(__dirname));
 
+// Serve the main page
 app.get("/", function (request, response) {
-  response.send("Simple web server of files from " + __dirname);
+  response.send(`<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Welcome</title>
+      <script>
+        window.onload = function() {
+          alert("Welcome to the site! Please log in to continue.");
+        };
+      </script>
+    </head>
+    <body>
+      <h1>Welcome to the Site</h1>
+      <p>Please log in to access more features.</p>
+    </body>
+    </html>`);
 });
 
-/**
- * Use express to handle argument passing in the URL. This .get will cause
- * express to accept URLs with /test/<something> and return the something in
- * request.params.p1.
- * 
- * If implement the get as follows:
- * /test        - Returns the SchemaInfo object of the database in JSON format.
- *                This is good for testing connectivity with MongoDB.
- * /test/info   - Same as /test.
- * /test/counts - Returns an object with the counts of the different collections
- *                in JSON format.
- */
-app.get("/test/:p1?", function (request, response) {
-  // Express parses the ":p1" from the URL and returns it in the request.params
-  // objects.
-  console.log("/test called with param1 = ", request.params.p1);
+// Serve login form
+app.get('/login', (req, res) => {
+  const loginForm = `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background-color: #f4f4f4;
+            }
+            form {
+                background: white;
+                padding: 20px;
+                border-radius: 5px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            input {
+                margin-bottom: 10px;
+                padding: 10px;
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <form id="login-form">
+            <h2>Login</h2>
+            <input type="text" id="login_name" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <script>
+            document.getElementById('login-form').addEventListener('submit', async (event) => {
+                event.preventDefault();
 
+                const login_name = document.getElementById('login_name').value;
+                const password = document.getElementById('password').value;
+
+                const response = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ login_name, password })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/'; // Redirect to home on success
+                } else {
+                    alert('Login failed! Please check your credentials.');
+                }
+            });
+        </script>
+    </body>
+    </html>`;
+    
+  res.send(loginForm); // Send the login form
+});
+
+// Test routes
+app.get("/test/:p1?", function (request, response) {
   const param = request.params.p1 || "info";
 
   if (param === "info") {
-    // Fetch the SchemaInfo. There should only one of them. The query of {} will
-    // match it.
     SchemaInfo.find({}, function (err, info) {
       if (err) {
-        // Query returned an error. We pass it back to the browser with an
-        // Internal Service Error (500) error code.
-        console.error("Error in /test/info:", err);
         response.status(500).send(JSON.stringify(err));
         return;
       }
       if (info.length === 0) {
-        // Query didn't return an error but didn't find the SchemaInfo object -
-        // This is also an internal error return.
         response.status(500).send("Missing SchemaInfo");
         return;
       }
-
-      // We got the object - return it in JSON format.
-      console.log("SchemaInfo", info[0]);
-      response.json(info[0]);  // Using response.json for consistent return
+      response.json(info[0]);
     });
   } else if (param === "counts") {
-    // In order to return the counts of all the collections we need to do an
-    // async call to each collection. That is tricky to do so we use the async
-    // package to do the work. We put the collections into an array and use async.each
-    // to do each .count() query.
     const collections = [
       { name: "user", collection: User },
       { name: "photo", collection: Photo },
       { name: "schemaInfo", collection: SchemaInfo },
     ];
-    async.each(
-      collections,
-      function (col, done_callback) {
-        col.collection.countDocuments({}, function (err, count) {
-          col.count = count;
-          done_callback(err);
+    async.each(collections, function (col, done_callback) {
+      col.collection.countDocuments({}, function (err, count) {
+        col.count = count;
+        done_callback(err);
+      });
+    }, function (err) {
+      if (err) {
+        response.status(500).send(JSON.stringify(err));
+      } else {
+        const obj = {};
+        collections.forEach(function (col) {
+          obj[col.name] = col.count;
         });
-      },
-      function (err) {
-        if (err) {
-          response.status(500).send(JSON.stringify(err));
-        } else {
-          const obj = {};
-          for (let i = 0; i < collections.length; i++) {
-            obj[collections[i].name] = collections[i].count;
-          }
-          response.json(obj);  // Using response.json for consistent return
-        }
+        response.json(obj);
       }
-    );
+    });
   } else {
-    // If we don't understand the parameter we return a (Bad Parameter) (400)
-    // status.
     response.status(400).send("Bad param " + param);
   }
 });
 
-/**
- * URL /user/list - Returns all the User objects.
- */
+// URL /user/list - Returns all the User objects.
 app.get("/user/list", function (request, response) {
-
-  // Get all users
   User.find({}, function (err, users) {
     if (err) {
-      console.error("Error in /user/list:", err);
       response.status(400).send(JSON.stringify(err));
       return;
     }
@@ -156,43 +205,35 @@ app.get("/user/list", function (request, response) {
       return;
     }
 
-    // Convert user objects to objects with only id, first_name, and last_name
-    const userList = users.map(user => ({
-      _id: user._id.toString(),  // Convert ObjectId to string explicitly if necessary
-      first_name: user.first_name,
-      last_name: user.last_name
-    }));
-    response.json(userList);  // Using response.json for consistent return
+    const userList = users.map(function (user) {
+      return {
+        _id: user._id.toString(),
+        first_name: user.first_name,
+        last_name: user.last_name
+      };
+    });
+    response.json(userList);
   });
 });
 
-/**
- * URL /user/:id - Returns the information for User (id).
- */
+// URL /user/:id - Returns the information for User (id).
 app.get("/user/:id", function (request, response) {
   const id = request.params.id;
 
-  // Corrected to use findById for a more appropriate query by _id
   User.findById(id, { __v: 0 }, function (err, user) {
     if (err) {
-      // Handle errors from the database
-      console.error("Error in /user/:id", err);
       response.status(400).send(JSON.stringify(err));
       return;
     }
     if (!user) {
-      // No user found with the provided id
       response.status(404).send("User not found");
       return;
     }
-    // Successfully found the user, return the user data
-    response.json(user);  // Using response.json for consistent return
+    response.json(user);
   });
 });
 
-/**
- * URL /photosOfUser/:id - Returns the Photos for User (id).
- */
+// URL /photosOfUser/:id - Returns the Photos for User (id).
 app.get("/photosOfUser/:id", function (request, response) {
   const userId = request.params.id;
   if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -240,9 +281,8 @@ app.get("/photosOfUser/:id", function (request, response) {
         "comments.user.occupation": 0,
         "comments.user.__v": 0
       } }
-  ]).exec((err, photos) => {
+  ]).exec(function (err, photos) {
     if (err) {
-      console.error("Error retrieving photos for user:", err);
       return response.status(500).send(JSON.stringify(err));
     }
     if (photos.length === 0) {
@@ -250,18 +290,109 @@ app.get("/photosOfUser/:id", function (request, response) {
     }
     return response.json(photos);
   });
-
-  
-  return null; 
 });
 
+// Login route
+app.post('/admin/login', async function (req, res) {
+  const { login_name, password } = req.body;
 
+  const user = await User.findOne({ login_name });
+  if (user) {
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (isMatch) {
+      req.session.user = { _id: user._id, first_name: user.first_name, last_name: user.last_name };
+      return res.json(req.session.user);
+    }
+    return res.status(400).json({ message: 'Invalid password' });
+  } else {
+    return res.status(400).json({ message: 'Invalid login name' });
+  }
+});
+
+// Logout route
+app.post('/admin/logout', function (req, res) {
+  if (req.session.user) {
+    req.session.destroy(function (err) {
+      if (err) {
+        return res.status(500).json({ message: 'Error logging out' });
+      }
+      return res.status(200).json({ message: 'Logged out successfully' });
+    });
+  } else {
+    return res.status(400).json({ message: 'No user logged in' });
+  }
+});
+
+// User Registration Route
+app.post('/admin/register', async function (req, res) {
+  const { first_name, last_name, login_name, password } = req.body;
+
+  // Basic validation
+  if (!first_name || !last_name || !login_name || !password) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newUser = new User({
+    first_name,
+    last_name,
+    login_name,
+    password: hashedPassword,
+  });
+
+  try {
+    await newUser.save();
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (err) {
+    console.error("Error registering user:", err);
+    res.status(400).json({ message: 'Error registering user' });
+  }
+});
+
+// Current User Route
+app.get('/admin/current_user', function (req, res) {
+  if (req.session.user) {
+    return res.json(req.session.user);
+  } else {
+    return res.status(404).json({ message: 'No user logged in' });
+  }
+});
+
+// Add Comment Route
+app.post('/comments/add', async (req, res) => {
+  const { photoId, userId, content } = req.body;
+
+  // Basic validation
+  if (!photoId || !userId || !content) {
+    return res.status(400).json({ message: 'Photo ID, User ID, and Comment content are required' });
+  }
+
+  try {
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      return res.status(404).json({ message: 'Photo not found' });
+    }
+
+    const newComment = { user_id: userId, content };
+    photo.comments.push(newComment);
+    await photo.save();
+
+    // Return the newly added comment
+    res.status(201).json({ message: 'Comment added successfully', comment: newComment });
+  } catch (err) {
+    console.error("Error adding comment:", err);
+    res.status(500).json({ message: 'Error adding comment' });
+  }
+});
+
+// Final response for 404
+app.use((req, res) => {
+  res.status(404).json({ message: 'Not Found' });
+});
+
+// Start server
 const server = app.listen(3000, function () {
   const port = server.address().port;
-  console.log(
-    "Listening at http://localhost:" +
-      port +
-      " exporting the directory " +
-      __dirname
-  );
+  console.log("Listening at http://localhost:" + port + " exporting the directory " + __dirname);
 });
