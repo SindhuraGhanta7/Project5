@@ -1,173 +1,200 @@
-import React, { useState, useEffect } from 'react';
-import { Button, TextField, ImageList, ImageListItem } from '@mui/material';
-import axios from 'axios';
+import React from 'react';
+import {
+    Button, TextField,
+    ImageList, ImageListItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Typography
+} from '@mui/material';
 import './userPhotos.css';
+import axios from 'axios';
+
 
 /**
- * Define UserPhotos, a React component for displaying user photos.
+ * Define UserPhotos, a React component of project #5
  */
-const UserPhotos = ({ match, changeMainContent }) => {
-  const [userId, setUserId] = useState(undefined);
-  const [photos, setPhotos] = useState([]);
-  const [comments, setComments] = useState({});
-  const [currentUserId, setCurrentUserId] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchCurrentUserId();
-    const newUserId = match.params.userId;
-    if (newUserId) {
-      handleUserChange(newUserId);
-    } else {
-      console.error("User ID is missing");
-    }
-  }, [match.params.userId]);
-
-  const fetchCurrentUserId = () => {
-    axios.get('/admin/current_user')
-      .then(response => setCurrentUserId(response.data._id))
-      .catch(error => console.error("Error fetching current user:", error))
-      .finally(() => setLoading(false));
-  };
-
-  const handleUserChange = (userId) => {
-    setUserId(userId);
-    axios.get(`/photosOfUser/${userId}`)
-      .then(response => setPhotos(response.data))
-      .catch(error => console.error("Error fetching photos:", error));
-
-    axios.get(`/user/${userId}`)
-      .then(response => {
-        const newUser = response.data;
-        const mainContent = `User Photos for ${newUser.first_name} ${newUser.last_name}`;
-        changeMainContent(mainContent);
-      })
-      .catch(error => console.error("Error fetching user data:", error));
-  };
-
-  const handleCommentSubmit = (photoId) => {
-    if (!comments[photoId] || !comments[photoId].trim()) {
-      console.error("Comment cannot be empty");
-      return; // No alert here
-    }
-
-    axios.post(`/photos/${photoId}/comments`, {
-      comment: comments[photoId],
-      user_id: currentUserId,
-    })
-      .then(response => {
-        const newComment = {
-          _id: response.data._id,
-          comment: comments[photoId],
-          user: { _id: currentUserId, first_name: 'John', last_name: 'Doe' }, // Replace with actual user data if needed
-          date_time: new Date().toISOString(),
+class UserPhotos extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            user_id : undefined,
+            photos: undefined,
+            new_comment: undefined,
+            add_comment: false,
+            current_photo_id: undefined
         };
-        setPhotos(prevPhotos => prevPhotos.map(photo =>
-          photo._id === photoId
-            ? { ...photo, comments: [...photo.comments, newComment] }
-            : photo
-        ));
-        setComments(prev => ({ ...prev, [photoId]: '' }));
-      })
-      .catch(error => console.error("Error adding comment:", error));
-  };
+        this.handleCancelAddComment = this.handleCancelAddComment.bind(this);
+        this.handleSubmitAddComment = this.handleSubmitAddComment.bind(this);
+    }
 
-  const handleCommentChange = (photoId, value) => {
-    setComments(prev => ({ ...prev, [photoId]: value }));
-  };
+    componentDidMount() {
+        const new_user_id = this.props.match.params.userId;
+        this.handleUserChange(new_user_id);
+    }
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    componentDidUpdate() {
+        const new_user_id = this.props.match.params.userId;
+        const current_user_id = this.state.user_id;
+        if (current_user_id  !== new_user_id){
+            this.handleUserChange(new_user_id);
+        }
+    }
 
-  return userId ? (
-    <div>
-      <div>
-        <Button variant="contained" component="a" href={`#/users/${userId}`}>
-          User Detail
-        </Button>
-      </div>
-      <ImageList variant="masonry" cols={1} gap={8}>
-        {photos.map(item => (
-          <div key={item._id}>
-            <TextField
-              label="Photo Date"
-              variant="outlined"
-              disabled
-              fullWidth
-              margin="normal"
-              value={item.date_time}
-            />
-            <ImageListItem key={item.file_name}>
-              <img
-                src={`images/${item.file_name}`}
-                alt={item.file_name}
-                loading="lazy"
-              />
-            </ImageListItem>
+    handleUserChange(user_id){
+        axios.get("/photosOfUser/" + user_id)
+            .then((response) =>
+            {
+                console.log('then');
+                this.setState({
+                    user_id : user_id,
+                    photos: response.data
+                });
+            })
+            .catch(() => {
+                console.log('catch');
+            });
+        axios.get("/user/" + user_id)
+            .then((response) =>
+            {
+                const new_user = response.data;
+                const main_content = "User Photos for " + new_user.first_name + " " + new_user.last_name;
+                this.props.changeMainContent(main_content);
+            })
+            .catch(() =>
+            {
+                console.log('catch2');
+            });
+    }
 
-            <TextField
-              label="Add a Comment"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              value={comments[item._id] || ''}
-              onChange={(e) => handleCommentChange(item._id, e.target.value)}
-            />
-            <Button
-              variant="contained"
-              onClick={() => handleCommentSubmit(item._id)}
-            >
-              Submit Comment
-            </Button>
+    handleNewCommentChange = (event) => {
+        this.setState({
+            new_comment: event.target.value
+        });
+    };
 
-            {item.comments && item.comments.length > 0 ? (
-              item.comments.map(comment => (
-                <div key={comment._id}>
-                  <TextField
-                    label="Comment Date"
-                    variant="outlined"
-                    disabled
-                    fullWidth
-                    margin="normal"
-                    value={new Date(comment.date_time).toLocaleString()}
-                  />
-                  <TextField
-                    label="User"
-                    variant="outlined"
-                    disabled
-                    fullWidth
-                    margin="normal"
-                    value={`${comment.user.first_name} ${comment.user.last_name}`}
-                    component="a"
-                    href={`#/users/${comment.user._id}`}
-                  />
-                  <TextField
-                    label="Comment"
-                    variant="outlined"
-                    disabled
-                    fullWidth
-                    margin="normal"
-                    multiline
-                    rows={4}
-                    value={comment.comment}
-                  />
+    handleShowAddComment = (event) => {
+        const photo_id = event.target.attributes.photo_id.value;
+        this.setState({
+            add_comment: true,
+            current_photo_id: photo_id
+        });
+    };
+
+    handleCancelAddComment = () => {
+        this.setState({
+            add_comment: false,
+            new_comment: undefined,
+            current_photo_id: undefined
+        });
+    };
+
+    handleSubmitAddComment = () => {
+        const currentState = JSON.stringify({comment: this.state.new_comment});
+        const photo_id = this.state.current_photo_id;
+        const user_id = this.state.user_id;
+        axios.post("/commentsOfPhoto/" + photo_id,
+            currentState,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(() =>
+            {
+                this.setState({
+                    add_comment : false,
+                    new_comment: undefined,
+                    current_photo_id: undefined
+                });
+                axios.get("/photosOfUser/" + user_id)
+                    .then((response) =>
+                    {
+                        this.setState({
+                            photos: response.data
+                        });
+                    });
+            })
+            .catch( error => {
+                console.log(error);
+            });
+    };
+
+    render() {
+        return this.state.user_id ? (
+            <div>
+                <div>
+                    <Button variant="contained" component="a" href={"#/users/" + this.state.user_id}>
+                        User Detail
+                    </Button>
                 </div>
-              ))
-            ) : (
-              <TextField
-                label="No Comments"
-                variant="outlined"
-                disabled
-                fullWidth
-                margin="normal"
-              />
-            )}
-          </div>
-        ))}
-      </ImageList>
-    </div>
-  ) : <div />;
-};
-
+                <ImageList variant="masonry" cols={1} gap={8}>
+                    {this.state.photos ? this.state.photos.map((item) => (
+                        <div key={item._id}>
+                            <TextField label="Photo Date" variant="outlined" disabled fullWidth margin="normal"
+                                       value={item.date_time} />
+                            <ImageListItem key={item.file_name}>
+                                <img
+                                    src={`images/${item.file_name}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
+                                    srcSet={`images/${item.file_name}?w=164&h=164&fit=crop&auto=format`}
+                                    alt={item.file_name}
+                                    loading="lazy"
+                                />
+                            </ImageListItem>
+                            <div>
+                            {item.comments ?
+                                item.comments.map((comment) => (
+                                    <div key={comment._id}>
+                                        <TextField label="Comment Date" variant="outlined" disabled fullWidth
+                                                   margin="normal" value={comment.date_time} />
+                                        <TextField label="User" variant="outlined" disabled fullWidth
+                                                   margin="normal"
+                                                   value={comment.user.first_name + " " + comment.user.last_name}
+                                                   component="a" href={"#/users/" + comment.user._id}>
+                                        </TextField>
+                                        <TextField label="Comment" variant="outlined" disabled fullWidth
+                                                   margin="normal" multiline rows={4} value={comment.comment} />
+                                    </div>
+                                ))
+                                : (
+                                    <div>
+                                        <Typography>No Comments</Typography>
+                                    </div>
+                                )}
+                                <Button photo_id={item._id} variant="contained" onClick={this.handleShowAddComment}>
+                                    Add Comment
+                                </Button>
+                            </div>
+                        </div>
+                    )) : (
+                        <div>
+                            <Typography>No Photos</Typography>
+                        </div>
+                    )}
+                </ImageList>
+                <Dialog open={this.state.add_comment}>
+                    <DialogTitle>Add Comment</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Enter New Comment for Photo
+                        </DialogContentText>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            id="comment"
+                            label="Comment"
+                            multiline rows={4}
+                            fullWidth
+                            variant="standard"
+                            onChange={this.handleNewCommentChange}
+                            defaultValue={this.state.new_comment}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => {this.handleCancelAddComment();}}>Cancel</Button>
+                        <Button onClick={() => {this.handleSubmitAddComment();}}>Add</Button>
+                    </DialogActions>
+                </Dialog>
+            </div>
+        ) : (
+            <div/>
+        );
+    }
+}
 export default UserPhotos;

@@ -1,88 +1,16 @@
 /*
 CSS for the project #5 main page
 
-Since CSS uses a global namespace for classes, we should use class names starting with
+Since CSS uses a global name space for classes we should use class names starting with
 main- here.
 */
 
-/* main.css */
-
-/* Add styles to the top bar */
 .main-topbar-buffer {
   margin-top: 70px;
 }
 
-/* Improve the grid item style */
 .main-grid-item {
   height: calc(100vh - 85px);
-  padding: 20px;
-  border-radius: 10px; /* Add rounded corners */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
-  background-color: #f5f5f5; /* Set a light background color */
-}
-
-/* Style the app title */
-.main-grid-item h1 {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #333; /* Dark text color */
-}
-
-/* Style the main content area */
-.main-content {
-  padding: 20px;
-}
-
-/* Style the UserList component */
-.main-user-list-container {
-  overflow-y: auto; /* Add a vertical scrollbar if the content overflows */
-  max-height: 80vh; /* Limit the height of the user list */
-}
-
-/* Style individual list items */
-.main-list-item {
-  cursor: pointer; /* Change cursor to pointer on hover */
-  transition: background-color 0.3s;
-}
-
-.main-list-item:hover {
-  background-color: #e0e0e0; /* Light gray background on hover */
-}
-
-/* Style the TopBar */
-.main-topbar-appBar {
-  background-color: #00b392 !important;
-}
-
-.main-topbar-name {
-  font-size: 28px;
-  font-weight: bold;
-  color: #fff; /* White text color */
-  margin-right: 10px;
-}
-
-.main-topbar-heading {
-  font-size: 20px;
-  color: #fff; /* White text color */
-}
-
-/* Style the UserDetail and UserPhotos components */
-.main-user-detail-container,
-.main-user-photos-container {
-  padding: 20px;
-  background-color: #fff; /* White background */
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Additional styles for buttons */
-.main-button {
-  margin-top: 10px;
-  background-color: #00b392; /* Match the top bar color */
-  color: #fff; /* White text */
-}
-
-.main-button:hover {
-  background-color: #009f7f; /* Darker shade on hover */
+  overflow: auto;
+  padding: 10px;
 }

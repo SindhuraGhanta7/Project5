@@ -28,7 +28,7 @@ class LoginRegister extends React.Component {
 
     try {
       const response = await axios.post('/admin/login', { login_name: loginName, password });
-      this.props.onLoginSuccess(response.data);
+      this.props.changeUser(response.data); // Updated this line
       this.setState({ successMessage: 'Login successful!', loading: false });
     } catch (error) {
       console.error(error);
@@ -72,7 +72,7 @@ class LoginRegister extends React.Component {
   handleLogout = async () => {
     try {
       await axios.post('/admin/logout');
-      this.props.onLogoutSuccess();
+      this.props.changeUser(undefined); // Updated this line
       this.setState({ successMessage: 'Logged out successfully.', errorMessage: '' });
     } catch (error) {
       console.error(error);

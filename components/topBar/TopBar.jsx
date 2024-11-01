@@ -1,59 +1,141 @@
-import React, { useEffect, useState } from 'react';
-import { AppBar, Toolbar, Typography } from '@mui/material';
+import React from 'react';
+import {
+    AppBar, Toolbar, Typography, Button, Divider, Alert, Snackbar
+} from '@mui/material';
 import './TopBar.css';
-import FetchModel from '../../lib/fetchModelData';
+import axios from 'axios';
 
-function TopBar() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+/**
+ * Define TopBar, a React component of project #5
+ */
+class TopBar extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            app_info: undefined,
+            photo_upload_show: false,
+            photo_upload_error: false,
+            photo_upload_success: false
+        };
+        this.handleLogout = this.handleLogout.bind(this);
+        this.handleNewPhoto = this.handleNewPhoto.bind(this);
+    }
 
-  useEffect(() => {
-    // Fetch the current user data
-    const fetchCurrentUser = async () => {
-      try {
-        const response = await FetchModel('/admin/current_user');
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching current user data:", error);
-      } finally {
-        setLoading(false);
-      }
+    componentDidMount() {
+        this.handleAppInfoChange();
+    }
+
+    handleLogout = () => {
+        axios.post("/admin/logout")
+            .then(() => {
+                this.props.changeUser(undefined);
+            })
+            .catch(error => {
+                this.props.changeUser(undefined);
+                console.log(error);
+            });
     };
 
-    fetchCurrentUser();
-  }, []);
+    handleNewPhoto = (e) => {
+        e.preventDefault();
+        if (this.uploadInput.files.length > 0) {
+            const domForm = new FormData();
+            domForm.append('uploadedphoto', this.uploadInput.files[0]);
+            axios.post("/photos/new", domForm)
+                .then(() => {
+                    this.setState({
+                        photo_upload_show: true,
+                        photo_upload_error: false,
+                        photo_upload_success: true
+                    });
+                })
+                .catch(error => {
+                    this.setState({
+                        photo_upload_show: true,
+                        photo_upload_error: true,
+                        photo_upload_success: false
+                    });
+                    console.log(error);
+                });
+        }
+    };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    handleClose = () => {
+        this.setState({
+            photo_upload_show: false,
+            photo_upload_error: false,
+            photo_upload_success: false
+        });
+    };
 
-  const userName = user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
-  const occupation = user ? user.occupation || 'Occupation not specified' : 'Occupation not specified';
-  const currentPath = window.location.href;
-  const headingText = currentPath.includes('/photos/')
-    ? `Photos of ${userName}`
-    : `Details of ${userName}`;
+    handleAppInfoChange() {
+        const app_info = this.state.app_info;
+        if (app_info === undefined) {
+            axios.get("/test/info")
+                .then((response) => {
+                    this.setState({
+                        app_info: response.data
+                    });
+                });
+        }
+    }
 
-  return (
-    <AppBar className="topbar-appBar" position="absolute">
-      <Toolbar className="topbar-centered" style={{ justifyContent: 'space-between' }}>
-        <div className="left-content topbar-left">
-          <Typography variant="h4" color="inherit" className="topbar-app-name">
-            GROUP 7
-          </Typography>
-        </div>
-        <div className="user-info-topbar">
-          <Typography variant="h6" color="inherit" className="topbar-heading">
-            {headingText}
-          </Typography>
-          <Typography variant="caption" color="inherit" className="user-occupation-topbar">
-            {occupation}
-          </Typography>
-          <Typography variant="h6">Version: 0</Typography>
-        </div>
-      </Toolbar>
-    </AppBar>
-  );
+    render() {
+        return this.state.app_info ? (
+            <AppBar className="topbar-appBar" position="absolute">
+                <Toolbar>
+                    <Typography variant="h5" component="div" sx={{ flexGrow: 0 }} color="inherit">
+                        Group 7
+                    </Typography>
+                    <Divider orientation="vertical" flexItem />
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }} color="inherit">
+                        {this.props.user ? (
+                            <>
+                                <span>{"Hi " + this.props.user.first_name}</span>
+                                <Divider orientation="vertical" flexItem />
+                                <span>User Photos for Ian Malcolm</span>
+                            </>
+                        ) : (
+                            "Please Login"
+                        )}
+                    </Typography>
+                    <Divider orientation="vertical" flexItem />
+                    <Typography variant="h5" component="div" sx={{ flexGrow: 0 }} color="inherit">
+                        Version: {this.state.app_info.version}
+                    </Typography>
+                    <Divider orientation="vertical" flexItem />
+                    {this.props.user && (
+                        <>
+                            <Button variant="contained" onClick={this.handleLogout}>Logout</Button>
+                            <Divider orientation="vertical" flexItem />
+                            <Button
+                                component="label"
+                                variant="contained"
+                            >
+                                Add Photo
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    hidden
+                                    ref={(domFileRef) => { this.uploadInput = domFileRef; }}
+                                    onChange={this.handleNewPhoto}
+                                />
+                            </Button>
+                            <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'left' }} open={this.state.photo_upload_show} autoHideDuration={6000} onClose={this.handleClose}>
+                                {this.state.photo_upload_success ? (
+                                    <Alert onClose={this.handleClose} severity="success" sx={{ width: '100%' }}>Photo Uploaded</Alert>
+                                ) : this.state.photo_upload_error ? (
+                                    <Alert onClose={this.handleClose} severity="error" sx={{ width: '100%' }}>Error Uploading Photo</Alert>
+                                ) : <div />}
+                            </Snackbar>
+                        </>
+                    )}
+                </Toolbar>
+            </AppBar>
+        ) : (
+            <div />
+        );
+    }
 }
 
 export default TopBar;
