@@ -21,6 +21,7 @@ class LoginRegister extends React.Component {
     };
   }
 
+  // Login method
   handleLogin = async (e) => {
     e.preventDefault();
     this.setState({ loading: true, errorMessage: '', successMessage: '' });
@@ -28,17 +29,18 @@ class LoginRegister extends React.Component {
 
     try {
       const response = await axios.post('/admin/login', { login_name: loginName, password });
-      this.props.changeUser(response.data); // Updated this line
+      this.props.changeUser(response.data); // Pass logged-in user data to parent component
       this.setState({ successMessage: 'Login successful!', loading: false });
     } catch (error) {
       console.error(error);
-      this.setState({ 
-        errorMessage: error.response?.data?.message || 'Login failed. Please check your credentials.', 
-        loading: false 
+      this.setState({
+        errorMessage: error.response?.data?.message || 'Login failed. Please check your credentials.',
+        loading: false,
       });
     }
   };
 
+  // Register method
   handleRegister = async (e) => {
     e.preventDefault();
     this.setState({ loading: true, errorMessage: '', successMessage: '' });
@@ -62,18 +64,21 @@ class LoginRegister extends React.Component {
       });
     } catch (error) {
       console.error(error);
-      this.setState({ 
-        errorMessage: error.response?.data?.message || 'Registration failed. Please check your input.', 
-        loading: false 
+      this.setState({
+        errorMessage: error.response?.data?.message || 'Registration failed. Please check your input.',
+        loading: false,
       });
     }
   };
 
+  // Logout method
   handleLogout = async () => {
     try {
       await axios.post('/admin/logout');
-      this.props.changeUser(undefined); // Updated this line
+      this.props.changeUser(undefined); // Clear the user data in parent component (via props)
       this.setState({ successMessage: 'Logged out successfully.', errorMessage: '' });
+      // Optionally, you can redirect or clear the state here
+      window.location.href = '/login-register';  // Redirect to login page (optional)
     } catch (error) {
       console.error(error);
       this.setState({ errorMessage: 'Logout failed.', successMessage: '' });
@@ -81,7 +86,19 @@ class LoginRegister extends React.Component {
   };
 
   render() {
-    const { loginName, password, firstName, lastName, location, description, occupation, isLogin, errorMessage, successMessage, loading } = this.state;
+    const {
+      loginName,
+      password,
+      firstName,
+      lastName,
+      location,
+      description,
+      occupation,
+      isLogin,
+      errorMessage,
+      successMessage,
+      loading,
+    } = this.state;
 
     return (
       <Paper className="login-register">
@@ -140,7 +157,11 @@ class LoginRegister extends React.Component {
             {isLogin ? 'Switch to Register' : 'Switch to Login'}
           </Button>
         </form>
-        {isLogin && <Button onClick={this.handleLogout} variant="contained">Logout</Button>}
+        {isLogin && (
+          <Button onClick={this.handleLogout} variant="contained">
+            Logout
+          </Button>
+        )}
       </Paper>
     );
   }

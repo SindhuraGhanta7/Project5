@@ -1,12 +1,10 @@
 import React from 'react';
-import {
-    AppBar, Toolbar, Typography, Button, Divider, Alert, Snackbar
-} from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Divider, Snackbar, Alert } from '@mui/material';
 import './TopBar.css';
 import axios from 'axios';
 
 /**
- * Define TopBar, a React component of project #5
+ * Define TopBar, a React component for project #5
  */
 class TopBar extends React.Component {
     constructor(props) {
@@ -15,72 +13,72 @@ class TopBar extends React.Component {
             app_info: undefined,
             photo_upload_show: false,
             photo_upload_error: false,
-            photo_upload_success: false
+            photo_upload_success: false,
         };
-        this.handleLogout = this.handleLogout.bind(this);
-        this.handleNewPhoto = this.handleNewPhoto.bind(this);
+        this.cancelTokenSource = axios.CancelToken.source(); // Initialize cancel token for axios requests
     }
 
+    // Fetch the app info once when the component mounts
     componentDidMount() {
         this.handleAppInfoChange();
     }
 
-    handleLogout = () => {
-        axios.post("/admin/logout")
-            .then(() => {
-                this.props.changeUser(undefined);
-            })
-            .catch(error => {
-                this.props.changeUser(undefined);
-                console.log(error);
-            });
-    };
+    // Clean up when the component unmounts
+    componentWillUnmount() {
+        // Cancel the API request if the component is unmounted
+        this.cancelTokenSource.cancel('Component unmounted, request aborted.');
+    }
 
-    handleNewPhoto = (e) => {
-        e.preventDefault();
-        if (this.uploadInput.files.length > 0) {
-            const domForm = new FormData();
-            domForm.append('uploadedphoto', this.uploadInput.files[0]);
-            axios.post("/photos/new", domForm)
-                .then(() => {
-                    this.setState({
-                        photo_upload_show: true,
-                        photo_upload_error: false,
-                        photo_upload_success: true
-                    });
-                })
-                .catch(error => {
-                    this.setState({
-                        photo_upload_show: true,
-                        photo_upload_error: true,
-                        photo_upload_success: false
-                    });
-                    console.log(error);
-                });
-        }
-    };
-
-    handleClose = () => {
-        this.setState({
-            photo_upload_show: false,
-            photo_upload_error: false,
-            photo_upload_success: false
-        });
-    };
-
+    // Fetch app info from the backend (only once)
     handleAppInfoChange() {
-        const app_info = this.state.app_info;
+        const { app_info } = this.state;
         if (app_info === undefined) {
-            axios.get("/test/info")
+            axios.get("/test/info", { cancelToken: this.cancelTokenSource.token })
                 .then((response) => {
-                    this.setState({
-                        app_info: response.data
-                    });
+                    this.setState({ app_info: response.data });
+                })
+                .catch((error) => {
+                    if (axios.isCancel(error)) {
+                        console.log('Request canceled due to component unmounting:', error.message);
+                    } else {
+                        console.error('Error fetching app info:', error);
+                    }
                 });
         }
     }
 
+    // Handle closing of the snackbar notifications
+    handleClose = () => {
+        this.setState({
+            photo_upload_show: false,
+            photo_upload_error: false,
+            photo_upload_success: false,
+        });
+    };
+
+    // Handle the photo upload (placeholder for actual upload logic)
+    handleNewPhoto = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            // Simulate a successful photo upload process
+            this.setState({
+                photo_upload_show: true,
+                photo_upload_success: true,
+            });
+        } else {
+            this.setState({
+                photo_upload_show: true,
+                photo_upload_error: true,
+            });
+        }
+    };
+
     render() {
+        const { user, selectedUser, handleLogout } = this.props; // Destructure handleLogout from props
+
+        // Check for logged-in user (user) and selected user (selectedUser)
+        const displayName = selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}` : '';
+
         return this.state.app_info ? (
             <AppBar className="topbar-appBar" position="absolute">
                 <Toolbar>
@@ -89,11 +87,16 @@ class TopBar extends React.Component {
                     </Typography>
                     <Divider orientation="vertical" flexItem />
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }} color="inherit">
-                        {this.props.user ? (
+                        {user ? (
                             <>
-                                <span>{"Hi " + this.props.user.first_name}</span>
+                                <span>{"Hi " + user.first_name}</span>
                                 <Divider orientation="vertical" flexItem />
-                                <span>User Photos for Ian Malcolm</span>
+                                {/* Display Photos of selectedUser if available */}
+                                {selectedUser ? (
+                                    <span>Photos of {displayName}</span>
+                                ) : (
+                                    <span />
+                                )}
                             </>
                         ) : (
                             "Please Login"
@@ -104,29 +107,28 @@ class TopBar extends React.Component {
                         Version: {this.state.app_info.version}
                     </Typography>
                     <Divider orientation="vertical" flexItem />
-                    {this.props.user && (
+                    {user && (
                         <>
-                            <Button variant="contained" onClick={this.handleLogout}>Logout</Button>
+                            {/* Logout Button */}
+                            <Button variant="contained" onClick={handleLogout}>Logout</Button>
                             <Divider orientation="vertical" flexItem />
-                            <Button
-                                component="label"
-                                variant="contained"
-                            >
+                            {/* Add Photo Button */}
+                            <Button component="label" variant="contained">
                                 Add Photo
                                 <input
                                     type="file"
                                     accept="image/*"
                                     hidden
-                                    ref={(domFileRef) => { this.uploadInput = domFileRef; }}
                                     onChange={this.handleNewPhoto}
                                 />
                             </Button>
+                            {/* Snackbar for photo upload status */}
                             <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'left' }} open={this.state.photo_upload_show} autoHideDuration={6000} onClose={this.handleClose}>
                                 {this.state.photo_upload_success ? (
                                     <Alert onClose={this.handleClose} severity="success" sx={{ width: '100%' }}>Photo Uploaded</Alert>
                                 ) : this.state.photo_upload_error ? (
                                     <Alert onClose={this.handleClose} severity="error" sx={{ width: '100%' }}>Error Uploading Photo</Alert>
-                                ) : <div />}
+                                ) : null}
                             </Snackbar>
                         </>
                     )}
