@@ -125,17 +125,21 @@ class TopBar extends React.Component {
                             {/* Snackbar for photo upload status */}
                             <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'left' }} open={this.state.photo_upload_show} autoHideDuration={6000} onClose={this.handleClose}>
                                 {this.state.photo_upload_success ? (
-                                    <Alert onClose={this.handleClose} severity="success" sx={{ width: '100%' }}>Photo Uploaded</Alert>
-                                ) : this.state.photo_upload_error ? (
-                                    <Alert onClose={this.handleClose} severity="error" sx={{ width: '100%' }}>Error Uploading Photo</Alert>
-                                ) : null}
+                                    <Alert onClose={this.handleClose} severity="success">
+                                        Photo uploaded successfully.
+                                    </Alert>
+                                ) : (
+                                    <Alert onClose={this.handleClose} severity="error">
+                                        Photo upload failed.
+                                    </Alert>
+                                )}
                             </Snackbar>
                         </>
                     )}
                 </Toolbar>
             </AppBar>
         ) : (
-            <div />
+            <div>Loading...</div>  // Loading screen while app info is being fetched
         );
     }
 }

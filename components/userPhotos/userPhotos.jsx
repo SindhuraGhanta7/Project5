@@ -1,10 +1,11 @@
 import React from 'react';
 import {
     Button, TextField,
-    ImageList, ImageListItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Typography
+    ImageListItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Typography
 } from '@mui/material';
 import './userPhotos.css';
 import axios from 'axios';
+import { useHistory, useParams, useLocation } from 'react-router-dom';
 
 /**
  * Define UserPhotos, a React component of project #5
@@ -29,6 +30,9 @@ class UserPhotos extends React.Component {
 
     componentDidMount() {
         const new_user_id = this.props.match.params.userId;
+        const { location } = this.props; // Extract current location (URL) from props
+        const { hash } = location;
+        const photoIndex = hash ? parseInt(hash.split('/')[2], 10) : 0; // Extract the photo index from the URL
 
         // Check if user is already logged in via localStorage
         const userInfo = localStorage.getItem('user_info');
@@ -39,6 +43,7 @@ class UserPhotos extends React.Component {
                 this.setState({
                     user_id: parsedUserInfo.user_id,
                     photos: parsedUserInfo.photos || [],
+                    current_index: photoIndex // Set the current index from URL
                 });
             }
         }
@@ -142,7 +147,7 @@ class UserPhotos extends React.Component {
         if (this.state.current_index < this.state.photos.length - 1) {
             this.setState(prevState => ({
                 current_index: prevState.current_index + 1
-            }));
+            }), this.updateURL); // Update URL when navigating
         }
     }
 
@@ -150,8 +155,14 @@ class UserPhotos extends React.Component {
         if (this.state.current_index > 0) {
             this.setState(prevState => ({
                 current_index: prevState.current_index - 1
-            }));
+            }), this.updateURL); // Update URL when navigating
         }
+    }
+
+    updateURL() {
+        const { current_index, user_id } = this.state;
+        const newURL = `#/users/${user_id}/photos/${current_index}`;
+        window.history.pushState(null, '', newURL); // Update browser URL
     }
 
     render() {
