@@ -21,7 +21,7 @@ function UserList() {
       <List component="nav">
         {userData.map((user, index) => (
           <Link to={"/users/" + user._id} key={index} className={`main-user-list`}>
-            <ListItem onClick={() => hisotry.push("/users/" + user._id)}>
+            <ListItem onClick={() => history.push("/users/" + user._id)}>
               <ListItemText primary={`${user.first_name} ${user.last_name}`} />
             </ListItem>
           </Link>

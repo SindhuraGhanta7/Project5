@@ -2,7 +2,6 @@ import { Button, Typography, Box, Avatar } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import "./userDetail.css";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 
 import React, { useEffect, useState } from "react";
