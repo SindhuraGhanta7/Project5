@@ -1,12 +1,8 @@
-GROUP 7
-
-PRODUCT OWNER
+# Group 7 Scrum Team
+## Product Owner
 Sindhura Ghanta
-
-SCRUM MASTER
+## Scrum Master
 Puneeth Pemmasani
-
 ## Developers
 - Aakash Vidiyala
 - Shipra Shipra
-  
