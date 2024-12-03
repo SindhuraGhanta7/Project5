@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Avatar, Box, Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import { useHistory, Link, useLocation } from "react-router-dom";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import FavoriteIcon from "@mui/icons-material/Favorite";
 import "./userPhotos.css";
 import axios from "axios";
 import { ChatBubbleOutline } from "@mui/icons-material";
@@ -63,19 +61,6 @@ function UserPhotos(props) {
       .catch((err) => console.log(err));
   };
 
-  const onLikeClick = (photo) => {
-    axios
-      .post("http://localhost:3000/photos/like/" + photo._id)
-      .then((res) => {
-        setPhotosData((prev) => {
-          const newPhotosData = [...prev];
-          const photoIndex = newPhotosData.findIndex((photoData) => photoData._id === photo._id);
-          newPhotosData[photoIndex].liked_by = res.data;
-          return newPhotosData;
-        });
-      })
-      .catch((err) => console.log(err));
-  };
 
   const onFavoriteClick = (photo) => {
     axios
@@ -131,10 +116,6 @@ function UserPhotos(props) {
             </Box>
             <Box display="flex" flexDirection="row" alignItems="center" gap={1} marginTop={2}>
               <ChatBubbleOutline /> <Typography sx={{ marginRight: 3 }}>{photo?.comments?.length}</Typography>
-              <Box onClick={() => onLikeClick(photo)} sx={{ cursor: "pointer" }}>
-                {photo?.liked_by?.includes(props.userId) ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
-              </Box>{" "}
-              <Typography>{photo?.liked_by?.length || 0}</Typography>
               <Box
                 onClick={() => {
                   onFavoriteClick(photo);

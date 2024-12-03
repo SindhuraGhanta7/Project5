@@ -4,6 +4,7 @@ import "./userDetail.css";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -80,7 +81,6 @@ function UserDetail(props) {
             </Box>
             <Box display="flex" flexDirection="row" alignItems="center" gap={1} marginTop={2}>
               <ChatBubbleOutlineIcon /> <Typography sx={{ marginRight: 3 }}>{recentPhoto?.comments?.length}</Typography>
-              <FavoriteBorderIcon /> <Typography>{recentPhoto?.liked_by?.length || 0}</Typography>
             </Box>
           </Box>
         )}
@@ -94,7 +94,6 @@ function UserDetail(props) {
             </Box>
             <Box display="flex" flexDirection="row" alignItems="center" gap={1} marginTop={2}>
               <ChatBubbleOutlineIcon /> <Typography sx={{ marginRight: 3 }}>{mostComments?.comments?.length}</Typography>
-              <FavoriteBorderIcon /> <Typography>{mostComments?.liked_by?.length || 0}</Typography>
             </Box>
           </Box>
         )}
