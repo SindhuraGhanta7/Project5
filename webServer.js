@@ -266,14 +266,14 @@ app.get("/photosOfUser/:id", async function (request, response) {
   } else {
     try {
       const id = request.params.id;
-      Photo.createIndexes({ user_id: 1, date_time: -1 });
+      Photo.createIndexes({ user_id: 1, liked_by: -1, date_time: -1 });
       const photos = await Photo.find({ user_id: id }, { __v: 0 })
         .populate({
           path: "comments.user_id",
           model: "User",
           select: "-location -description -occupation -login_name -password -__v",
         })
-        .sort({ date_time: -1 })
+        .sort({ liked_by: -1, date_time: -1 })
         .lean();
 
       if (photos.length === 0) {
@@ -433,6 +433,30 @@ app.get("/photos/most-comments/:id", async function (request, response) {
   }
 });
 
+app.post("/photos/like/:photo_id", async function (request, response) {
+  if (!request.session.user) {
+    response.status(401).send("You are not logged in");
+  } else {
+    try {
+      const photo_id = request.params.photo_id;
+      const photo = await Photo.findById(photo_id);
+      if (!photo) {
+        response.status(400).send("Photo not found");
+        return;
+      } else if (photo.liked_by.includes(request.session.user._id)) {
+        photo.liked_by = photo.liked_by.filter((id) => id.toString() !== request.session.user._id.toString());
+        await photo.save();
+        response.status(200).send(photo.liked_by);
+      } else {
+        photo.liked_by.push(request.session.user._id);
+        await photo.save();
+        response.status(200).send(photo.liked_by);
+      }
+    } catch (error) {
+      response.status(400).send("Invalid id");
+    }
+  }
+});
 
 app.post("/photos/favorite/:photo_id", async function (request, response) {
   if (!request.session.user) {
