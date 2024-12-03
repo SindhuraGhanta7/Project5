@@ -6,8 +6,7 @@ Sindhura Ghanta
 SCRUM MASTER
 Puneeth Pemmasani
 
-DEVELOPER 1
-Aakash Vidiyala
-
-DEVELOPER 2
-Shipra Shipra
+## Developers
+- Aakash Vidiyala
+- Shipra Shipra
+  
