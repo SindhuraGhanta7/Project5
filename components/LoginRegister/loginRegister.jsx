@@ -14,8 +14,7 @@ import "./loginRegister.css";
 import axios from "axios";
 import { Snackbar } from "@mui/material";
 
-// TODO remove, this demo shouldn't need to reset the theme.
-
+// Default theme
 const defaultTheme = createTheme();
 
 export default function LoginRegister({ setUser, setUserId }) {
@@ -23,6 +22,7 @@ export default function LoginRegister({ setUser, setUserId }) {
   const [errorToastOpen, setErrorToastOpen] = React.useState(false);
   const [successRegistration, setSuccessRegistration] = React.useState(false);
   const [tab, setTab] = React.useState("signIn");
+
   const handleSignUp = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -46,6 +46,7 @@ export default function LoginRegister({ setUser, setUserId }) {
         .catch(() => setErrorToastOpen(true));
     }
   };
+
   const handleLogin = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -66,22 +67,42 @@ export default function LoginRegister({ setUser, setUserId }) {
     <ThemeProvider theme={defaultTheme}>
       <Snackbar open={errorToastOpen} autoHideDuration={6000} onClose={() => setErrorToastOpen(false)} message="Error: Please fill out all fields properly." />
       <Snackbar open={successRegistration} autoHideDuration={6000} onClose={() => setSuccessRegistration(false)} message="Successfully registered. Please login" />
+
       <Grid container component="main" sx={{ height: "100vh" }}>
         <CssBaseline />
+
+        {/* Left side background image */}
         <Grid
           item
           xs={false}
           sm={4}
           md={7}
           sx={{
-            backgroundImage: "url(https://source.unsplash.com/random?wallpapers)",
+            backgroundImage: "url(https://images.unsplash.com/photo-1542396601-dca920ea2807?q=80&w=1951&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
             backgroundRepeat: "no-repeat",
             backgroundColor: (t) => (t.palette.mode === "light" ? t.palette.grey[50] : t.palette.grey[900]),
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
         />
-        <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+
+        {/* Right side form section with its own background image */}
+        <Grid
+          item
+          xs={12}
+          sm={8}
+          md={5}
+          component={Paper}
+          elevation={6}
+          square
+          sx={{
+            backgroundImage: "url(https://cdn.pixabay.com/photo/2022/09/13/11/30/pattern-7451714_1280.jpg)",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            minHeight: "100vh", // Ensure full height
+          }}
+        >
           {tab === "signIn" && (
             <Box
               sx={{
@@ -90,6 +111,9 @@ export default function LoginRegister({ setUser, setUserId }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.7)", // Optional: to create transparency effect for readability
+                borderRadius: "10px", // Optional: rounded corners for better design
+                padding: "20px",
               }}
             >
               <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>@</Avatar>
@@ -99,7 +123,6 @@ export default function LoginRegister({ setUser, setUserId }) {
               <Box component="form" noValidate onSubmit={handleLogin} sx={{ mt: 1 }}>
                 <TextField margin="normal" required fullWidth id="username" label="Username" name="username" autoComplete="username" autoFocus />
                 <TextField margin="normal" required fullWidth name="password" label="Password" type="password" id="password" autoComplete="current-password" />
-                {/* <FormControlLabel control={<Checkbox value="remember" color="primary" />} label="Remember me" /> */}
                 <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
                   Sign In
                 </Button>
@@ -116,6 +139,7 @@ export default function LoginRegister({ setUser, setUserId }) {
               </Box>
             </Box>
           )}
+
           {tab === "signUp" && (
             <Box
               sx={{
@@ -124,6 +148,9 @@ export default function LoginRegister({ setUser, setUserId }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.7)", // Optional: transparency for readability
+                borderRadius: "10px", // Rounded corners
+                padding: "20px",
               }}
             >
               <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>@</Avatar>
