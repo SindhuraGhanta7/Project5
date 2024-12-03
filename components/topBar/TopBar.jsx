@@ -5,7 +5,7 @@ import "./TopBar.css";
 import axios from "axios";
 
 /**
- * Define TopBar, a React componment of project #5
+ * Define TopBar, a React component of project #5
  */
 
 function TopBar(props) {
@@ -38,8 +38,17 @@ function TopBar(props) {
       .then((res) => setInfoData(res.data))
       .catch((err) => console.log(`Error + ${err}`));
   }, []);
+
   return (
-    <AppBar className="topbar-appBar" position="absolute">
+    <AppBar
+      className="topbar-appBar"
+      position="absolute"
+      sx={{
+        backgroundImage: "url(https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       <Modal open={openModal} onClose={() => setOpenModal(false)} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
         <Box sx={style}>
           <Typography id="modal-modal-title" variant="h6" component="h2">
