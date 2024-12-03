@@ -100,6 +100,7 @@ mongoose.connect("mongodb://127.0.0.1/project6", {
 // (http://expressjs.com/en/starter/static-files.html) do all the work for us.
 app.use(express.static(__dirname));
 
+
 function formatComments(array) {
   return array.map((item) => {
     const newItem = { ...item };
@@ -113,6 +114,31 @@ function formatComments(array) {
     }
     return newItem;
   });
+}
+function getSessionUserID(request){
+  return request.session.user_id;
+  //return session.user._id;
+}
+
+function isAuthenticated (req, res, next) {
+  if (req.session.user) next();
+  else {
+    res.status(401).send("Unauthorized");
+    // next('route');
+  }
+}
+
+function hasNoUserSession(request, response){
+  //return false;
+  if (!getSessionUserID(request)){
+    response.status(401).send();
+    return true;
+  }
+  // if (session.user === undefined){
+  //   response.status(401).send();
+  //   return true;
+  // }
+  return false;
 }
 
 app.get("/", function (request, response) {
@@ -500,6 +526,92 @@ app.get("/photos/favorites", async function (request, response) {
       response.status(400).send("Invalid id");
     }
   }
+});
+app.delete("/delete/:photo_id/:comment_id", isAuthenticated, function(request, response) {
+  const photoID = request.params.photo_id;
+  const commentID = request.params.comment_id;
+
+  Photo.find({_id: new mongoose.Types.ObjectId(photoID)}, function(errPhoto) {
+    if (errPhoto) {
+      response.status(400).send(JSON.stringify(errPhoto));
+      return;
+    }
+
+    Photo.updateOne({_id: photoID}, {$pull: {comments: {_id: commentID}}}, function(err, comment) {
+      if (err) {
+        response.status(400).send(JSON.stringify(err));
+        return;
+      }
+      if (comment === null) {
+        response.status(400).send("Comment not found");
+        return;
+      }
+      response.status(200).end("Success");
+    });
+  });
+});
+
+app.delete("/deletePhoto/:photo_id", isAuthenticated, function(request,response) {
+  const photoID = request.params.photo_id;
+
+ 
+  Photo.deleteOne({_id: new mongoose.Types.ObjectId(photoID)}, function(err, photo){
+    if(err){
+      response.status(400).send(JSON.stringify(err));
+      return;
+    }
+    if (photo === null) {
+      response.status(400).send("Photo not found");
+      return;
+    }
+   
+    response.status(200).end("Success");
+});
+});
+
+app.delete("/deleteUser/:user_id", isAuthenticated, function (request, response) {
+  const requestUserId = request.params.user_id;
+  const sessionUserId = request.session.user._id;
+
+  if (requestUserId !== sessionUserId) {
+    response.status(400).send("Unauthorized");
+    return;
+  }
+
+  // Remove all comments by user
+  Photo.updateMany({}, {$pull: {comments: {user_id: new mongoose.Types.ObjectId(sessionUserId)}}}, function (errPhotoDetails) {
+    if (errPhotoDetails) {
+      console.error("Error in /deleteUser/:user_id", errPhotoDetails);
+      response.status(400).send(JSON.stringify(errPhotoDetails));
+      return;
+    }
+    Photo.updateMany({}, {$pull: {permitted: sessionUserId}}, function(err) {
+        if(err){
+          response.status(400).send(JSON.stringify(err));
+          return;
+          }  
+    
+      // Delete photos of user
+      Photo.deleteMany({user_id: new mongoose.Types.ObjectId(sessionUserId)}, function (errPhotos) {
+        if (errPhotos) {
+          console.error("Error in /deleteUser/:user_id", errPhotos);
+          response.status(400).send(JSON.stringify(errPhotos));
+          return;
+        }        
+        
+        // Delete user
+        User.deleteOne({_id: new mongoose.Types.ObjectId(sessionUserId)}, function (errUser) {
+          if (errUser) {
+            console.error("Error in /deleteUser/:user_id", errUser);
+            response.status(400).send(JSON.stringify(errUser));
+            return;
+          }
+      
+          response.status(200).end("Success");
+        });
+      });
+    });
+  });
 });
 
 const server = app.listen(3000, function () {
