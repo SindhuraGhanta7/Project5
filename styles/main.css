@@ -10,7 +10,8 @@ main- here.
 }
 
 .main-grid-item {
-  height: calc(100vh - 85px);
-  overflow: auto;
+  height: calc(100vh - 115px);
   padding: 10px;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }

@@ -30,11 +30,7 @@ const SchemaInfo = require("./schema/schemaInfo.js");
 const versionString = "1.0";
 
 // We start by removing anything that existing in the collections.
-const removePromises = [
-  User.deleteMany({}),
-  Photo.deleteMany({}),
-  SchemaInfo.deleteMany({}),
-];
+const removePromises = [User.deleteMany({}), Photo.deleteMany({}), SchemaInfo.deleteMany({})];
 
 Promise.all(removePromises)
   .then(function () {
@@ -53,6 +49,7 @@ Promise.all(removePromises)
         occupation: user.occupation,
         login_name: user.last_name.toLowerCase(),
         password: "weak",
+        favorites: [],
       })
         .then(function (userObj) {
           // Set the unique ID of the object. We use the MongoDB generated _id
@@ -61,12 +58,7 @@ Promise.all(removePromises)
           userObj.save();
           mapFakeId2RealId[user._id] = userObj._id;
           user.objectID = userObj._id;
-          console.log(
-            "Adding user:",
-            user.first_name + " " + user.last_name,
-            " with ID ",
-            user.objectID
-          );
+          console.log("Adding user:", user.first_name + " " + user.last_name, " with ID ", user.objectID);
         })
         .catch(function (err) {
           console.error("Error create user", err);
@@ -87,6 +79,8 @@ Promise.all(removePromises)
         return Photo.create({
           file_name: photo.file_name,
           date_time: photo.date_time,
+          liked_by: photo.liked_by,
+          favorited_by: photo.favorited_by,
           user_id: mapFakeId2RealId[photo.user_id],
         })
           .then(function (photoObj) {
@@ -100,21 +94,11 @@ Promise.all(removePromises)
                     user_id: comment.user.objectID,
                   },
                 ]);
-                console.log(
-                  "Adding comment of length %d by user %s to photo %s",
-                  comment.comment.length,
-                  comment.user.objectID,
-                  photo.file_name
-                );
+                console.log("Adding comment of length %d by user %s to photo %s", comment.comment.length, comment.user.objectID, photo.file_name);
               });
             }
             photoObj.save();
-            console.log(
-              "Adding photo:",
-              photo.file_name,
-              " of user ID ",
-              photoObj.user_id
-            );
+            console.log("Adding photo:", photo.file_name, " of user ID ", photoObj.user_id);
           })
           .catch(function (err) {
             console.error("Error create user", err);
@@ -126,10 +110,7 @@ Promise.all(removePromises)
           version: versionString,
         })
           .then(function (schemaInfo) {
-            console.log(
-              "SchemaInfo object created with version ",
-              schemaInfo.version
-            );
+            console.log("SchemaInfo object created with version ", schemaInfo.version);
           })
           .catch(function (err) {
             console.error("Error create schemaInfo", err);
@@ -138,8 +119,7 @@ Promise.all(removePromises)
     });
 
     allPromises.then(function () {
-      mongoose.disconnect()
-           .then(() =>{console.log("loadDatabase Completed");});
+      mongoose.disconnect();
     });
   })
   .catch(function (err) {

@@ -1,110 +1,184 @@
-import React from 'react';
-import {
-    Box,
-    Button,
-    TextField
-} from '@mui/material';
-import './userDetail.css';
-import axios from 'axios';
+import { Button, Typography, Box, Avatar } from "@mui/material";
+import { useHistory } from "react-router-dom";
+import "./userDetail.css";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-/**
- * Define UserDetail, a React component of project #5
- */
-class UserDetail extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            user: undefined,
-            error: null, // To capture any errors during API calls
-        };
-        this.cancelTokenSource = axios.CancelToken.source(); // Initialize cancel token for axios requests
+function UserDetail(props) {
+  function stringToColor(string) {
+    let hash = 0;
+    let i;
+    /* eslint-disable no-bitwise */
+    for (i = 0; i < string.length; i += 1) {
+      hash = string.charCodeAt(i) + ((hash << 5) - hash);
     }
-
-    // Fetch user details when the component mounts or updates
-    componentDidMount() {
-        const new_user_id = this.props.match.params.userId;
-        this.handleUserChange(new_user_id);
+    let color = "#";
+    for (i = 0; i < 3; i += 1) {
+      const value = (hash >> (i * 8)) & 0xff;
+      color += `00${value.toString(16)}`.slice(-2);
     }
+    /* eslint-enable no-bitwise */
+    return color;
+  }
 
-    // Handle component updates to fetch new user details when userId changes
-    componentDidUpdate(prevProps) {
-        const new_user_id = this.props.match.params.userId;
-        const current_user_id = this.state.user?._id;
-        if (current_user_id !== new_user_id) {
-            this.handleUserChange(new_user_id);
-        }
-    }
+  const [userData, setUserData] = useState();
+  const [recentPhoto, setRecentPhoto] = useState();
+  const [mostComments, setMostComments] = useState();
+  const history = useHistory();
 
-    // Clean up ongoing API requests when the component unmounts
-    componentWillUnmount() {
-        this.cancelTokenSource.cancel('Component unmounted, request aborted.');
-    }
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/user/" + props.match.params.userId)
+      .then((res) => {
+        setUserData(res.data);
+        props.setTitle(`${res?.data?.first_name} ${res?.data?.last_name}`);
+      })
+      .catch((err) => console.log(err));
 
-    // Fetch user details from the backend
-    handleUserChange(user_id) {
-        axios.get(`/user/${user_id}`, { cancelToken: this.cancelTokenSource.token })
-            .then((response) => {
-                const new_user = response.data;
-                // Avoid unnecessary state update if the data is the same
-                if (this.state.user?._id !== new_user._id) {
-                    this.setState({
-                        user: new_user,
-                        error: null, // Reset error if the request is successful
-                    });
-                    const main_content = `User Details for ${new_user.first_name} ${new_user.last_name}`;
-                    this.props.changeMainContent(main_content);
-                }
-            })
-            .catch((error) => {
-                if (axios.isCancel(error)) {
-                    console.log('Request canceled:', error.message);
-                } else {
-                    console.error('Error fetching user details:', error);
-                    this.setState({
-                        error: 'Failed to load user details. Please try again later.',
-                    });
-                }
-            });
-    }
+    axios
+      .get("http://localhost:3000/photos/latest/" + props.match.params.userId)
+      .then((res) => {
+        setRecentPhoto(res.data);
+      })
+      .catch((err) => console.log(err));
 
-    render() {
-        const { user, error } = this.state;
+    axios
+      .get("http://localhost:3000/photos/most-comments/" + props.match.params.userId)
+      .then((res) => {
+        setMostComments(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [props.match.params.userId]);
 
-        return user ? (
-            <div>
-                <Box component="form" noValidate autoComplete="off">
-                    <div>
-                        <Button variant="contained" component="a" href={`#/photos/${user._id}`}>
-                            User Photos
-                        </Button>
-                    </div>
-                    <div>
-                        <TextField id="first_name" label="First Name" variant="outlined" disabled fullWidth
-                                   margin="normal" value={user.first_name} />
-                    </div>
-                    <div>
-                        <TextField id="last_name" label="Last Name" variant="outlined" disabled fullWidth
-                                   margin="normal" value={user.last_name} />
-                    </div>
-                    <div>
-                        <TextField id="location" label="Location" variant="outlined" disabled fullWidth
-                                   margin="normal" value={user.location} />
-                    </div>
-                    <div>
-                        <TextField id="description" label="Description" variant="outlined" multiline rows={4}
-                                   disabled fullWidth margin="normal" value={user.description} />
-                    </div>
-                    <div>
-                        <TextField id="occupation" label="Occupation" variant="outlined" disabled fullWidth
-                                   margin="normal" value={user.occupation} />
-                    </div>
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "100vh",
+        backgroundImage:
+          "url(https://images.unsplash.com/photo-1439792675105-701e6a4ab6f0?q=80&w=1773&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        padding: "40px 20px",
+        boxSizing: "border-box",
+        color: "#fff",
+      }}
+    >
+      <Box sx={{ maxWidth: "1200px", margin: "0 auto", padding: "20px", backgroundColor: "rgba(0, 0, 0, 0.6)", borderRadius: "10px" }}>
+        {/* User Profile */}
+        <Box sx={{ textAlign: "center", marginBottom: "30px" }}>
+          <Avatar
+            sx={{
+              bgcolor: stringToColor(`${userData?.first_name?.[0]}${userData?.last_name?.[0]}`),
+              width: 120,
+              height: 120,
+              fontSize: 50,
+              margin: "0 auto",
+            }}
+          >
+            {userData?.first_name?.[0]}
+            {userData?.last_name?.[0]}
+          </Avatar>
+          <Typography variant="h4" sx={{ marginTop: "20px" }}>
+            {userData?.first_name}&apos;s Profile
+          </Typography>
+          <Typography variant="h6">{userData?.first_name} {userData?.last_name}</Typography>
+          <Typography>{userData?.occupation}</Typography>
+          <Typography>{userData?.location}</Typography>
+          <Typography>{userData?.description}</Typography>
+
+          {userData?._id && (
+            <Button
+              variant="contained"
+              sx={{
+                marginTop: "20px",
+                backgroundColor: "#007bff",
+                "&:hover": { backgroundColor: "#0056b3" },
+              }}
+              onClick={() => history.push("/photos/" + userData._id)}
+            >
+              See {userData?.first_name} {userData?.last_name}&apos;s Photos
+            </Button>
+          )}
+        </Box>
+
+        {/* Recent and Most Commented Photos */}
+        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", gap: "20px", marginTop: "40px" }}>
+          {recentPhoto && (
+            <Box
+              sx={{
+                width: "48%",
+                cursor: "pointer",
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                padding: "10px",
+                borderRadius: "8px",
+              }}
+              onClick={() => history.push("/photos/" + props.match.params.userId + "?imageId=" + (recentPhoto?.file_name || ""))}
+            >
+              <Typography variant="h6" sx={{ marginBottom: "10px" }}>
+                Recent Photo
+              </Typography>
+              <Box sx={{ width: "100%", height: "200px", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "black" }}>
+                <img
+                  src={`../../images/${recentPhoto?.file_name}`}
+                  alt="Recent"
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "cover", borderRadius: "8px" }}
+                />
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <ChatBubbleOutlineIcon sx={{ color: "#fff" }} />
+                  <Typography sx={{ color: "#fff" }}>{recentPhoto?.comments?.length}</Typography>
                 </Box>
-                {error && <div style={{ color: 'red' }}>{error}</div>} {/* Show error message if any */}
-            </div>
-        ) : (
-            <div>Loading...</div> // Show a loading message while fetching user data
-        );
-    }
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <FavoriteBorderIcon sx={{ color: "#fff" }} />
+                  <Typography sx={{ color: "#fff" }}>{recentPhoto?.liked_by?.length || 0}</Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {mostComments && (
+            <Box
+              sx={{
+                width: "48%",
+                cursor: "pointer",
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                padding: "10px",
+                borderRadius: "8px",
+              }}
+              onClick={() => history.push("/photos/" + props.match.params.userId + "?imageId=" + (mostComments?.file_name || ""))}
+            >
+              <Typography variant="h6" sx={{ marginBottom: "10px" }}>
+                Most Comments
+              </Typography>
+              <Box sx={{ width: "100%", height: "200px", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "black" }}>
+                <img
+                  src={`../../images/${mostComments?.file_name}`}
+                  alt="Most Comments"
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "cover", borderRadius: "8px" }}
+                />
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <ChatBubbleOutlineIcon sx={{ color: "#fff" }} />
+                  <Typography sx={{ color: "#fff" }}>{mostComments?.comments?.length}</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <FavoriteBorderIcon sx={{ color: "#fff" }} />
+                  <Typography sx={{ color: "#fff" }}>{mostComments?.liked_by?.length || 0}</Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
 }
 
 export default UserDetail;

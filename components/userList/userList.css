@@ -1,24 +1,9 @@
 /* userList.css */
+.main-user-list {
+  text-decoration: none; /* Remove underline from links */
+  color:blacK;
+}
 
-/* Container for the user list */
-.user-list-container {
-    max-width: 300px;
-    margin: 0 auto;
-  }
-  
-  /* Style for list items */
-  .list-item {
-    padding: 10px;
-    transition: background-color 0.3s;
-  }
-  
-  .list-item:hover {
-    background-color: #f0f0f0;
-    cursor: pointer;
-  }
-  
-  /* Style for dividers */
-  .divider {
-    margin: 10px 0;
-  }
-  
+.main-user-list:hover {
+  opacity: 0.8; /* Slight opacity change on hover */
+}

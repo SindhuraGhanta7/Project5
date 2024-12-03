@@ -1,79 +1,64 @@
-import React from 'react';
-import {
-  List,
-  ListItemButton,
-  ListItemText,
-} from '@mui/material';
-import { Link } from 'react-router-dom'; // Import Link for routing
-import './userList.css';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { List, ListItem, ListItemText, Box } from "@mui/material";
+import { useHistory, Link } from "react-router-dom";
+import axios from "axios";
+import "./userList.css";
 
-/**
- * Define UserList, a React component of project #5
- */
-class UserList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            users: undefined,
-            user_id: undefined
-        };
-    }
+function UserList() {
+  const [userData, setUserData] = useState([]);
+  const history = useHistory();
 
-    componentDidMount() {
-        this.handleUserListChange();
-    }
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/user/list/")
+      .then((res) => {
+        setUserData(res.data);
+      })
+      .catch((err) => console.log(err));
+  }, []);
 
-    componentDidUpdate() {
-        const new_user_id = this.props.match?.params.userId;
-        const current_user_id = this.state.user_id;
-        if (current_user_id !== new_user_id) {
-            this.handleUserChange(new_user_id);
-        }
-    }
-
-    handleUserChange(user_id) {
-        this.setState({
-            user_id: user_id
-        });
-    }
-
-    handleUserListChange() {
-        axios.get("/user/list")
-            .then((response) => {
-                this.setState({
-                    users: response.data
-                });
-            });
-    }
-
-    render() {
-        return this.state.users ? (
-            <div>
-                <List component="nav">
-                    {
-                        this.state.users.map(user => (
-<ListItemButton
-  selected={this.state.user_id === user._id}
-  key={user._id}
-  divider={true}
-  component={Link} // Use Link for client-side navigation
-  to={`/users/${user._id}`} // Correct path without extra # or /# symbols
-  onClick={() => this.props.selectUser(user)} // Call selectUser when a user is clicked
->
-  <ListItemText primary={`${user.first_name} ${user.last_name}`} />
-</ListItemButton>
-
-
-
-                        ))
-                    }
-                </List>
-            </div>
-        ) : (
-            <div />
-        );
-    }
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        height: "100vh",
+        backgroundImage:
+          "url(https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        padding: "20px",
+        boxSizing: "border-box",
+      }}
+    >
+      <List component="nav">
+        {userData.map((user, index) => (
+          <Link to={"/users/" + user._id} key={index} className="main-user-list">
+            <ListItem
+              onClick={() => history.push("/users/" + user._id)}
+              sx={{
+                backgroundColor: "rgba(255, 255, 255, 0.6)", // Semi-transparent background
+                borderRadius: "8px",
+                marginBottom: "10px",
+                transition: "all 0.3s ease-in-out", // Smooth transition
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.8)", // Lighter background on hover
+                  transform: "scale(1.05)", // Slight scale-up effect
+                },
+              }}
+            >
+              <ListItemText
+                primary={`${user.first_name} ${user.last_name}`}
+                sx={{
+                  color: "#fff", // White text color for contrast
+                  fontWeight: "bold", // Make text bold
+                }}
+              />
+            </ListItem>
+          </Link>
+        ))}
+      </List>
+    </Box>
+  );
 }
 
 export default UserList;

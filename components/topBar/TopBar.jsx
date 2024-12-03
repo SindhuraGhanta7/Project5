@@ -1,126 +1,130 @@
-import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Divider, Snackbar, Alert } from '@mui/material';
-import './TopBar.css';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { AppBar, Box, Button, Input, Link, Modal, Toolbar, Typography } from "@mui/material";
+import { useHistory } from "react-router-dom";
+import "./TopBar.css";
+import axios from "axios";
 
-class TopBar extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            app_info: undefined,
-            photo_upload_show: false,
-            photo_upload_error: false,
-            photo_upload_success: false,
-        };
-        this.cancelTokenSource = axios.CancelToken.source();
-    }
+/**
+ * Define TopBar, a React component of project #5
+ */
 
-    componentDidMount() {
-        this.handleAppInfoChange();
-    }
+function TopBar(props) {
+  const history = useHistory();
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    boxShadow: 24,
+    p: 4,
+  };
+  const [infoData, setInfoData] = useState();
+  const [openModal, setOpenModal] = useState(false);
+  const [file, setFile] = useState();
+  const logout = () => {
+    props.setUser("");
+    props.setUserId("");
+    axios
+      .post("http://localhost:3000/admin/logout")
+      .then((res) => console.log(res))
+      .catch((err) => console.log(`Error + ${err}`));
+  };
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/test/info")
+      .then((res) => setInfoData(res.data))
+      .catch((err) => console.log(`Error + ${err}`));
+  }, []);
 
-    componentWillUnmount() {
-        this.cancelTokenSource.cancel('Component unmounted, request aborted.');
-    }
+  return (
+    <AppBar
+      className="topbar-appBar"
+      position="absolute"
+      sx={{
+        backgroundImage: "url(https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <Modal open={openModal} onClose={() => setOpenModal(false)} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Add Image
+          </Typography>
+          <Input type="file" name="image" id="image" onChange={(e) => setFile(e.target.files[0])} />
 
-    handleAppInfoChange() {
-        if (this.state.app_info === undefined) {
-            axios.get("/test/info", { cancelToken: this.cancelTokenSource.token })
-                .then((response) => {
-                    this.setState({ app_info: response.data });
+          {file && <img src={URL.createObjectURL(file)} alt="preview" className="img-preview" />}
+          <Button
+            onClick={() => {
+              const formData = new FormData();
+              formData.append("uploadedphoto", file);
+              axios
+                .post("http://localhost:3000/photos/new", formData)
+                .then((res) => {
+                  setOpenModal(false);
+                  history.push("/users/" + res.data.user_id);
                 })
-                .catch((error) => {
-                    if (axios.isCancel(error)) {
-                        console.log('Request canceled due to component unmounting:', error.message);
-                    } else {
-                        console.error('Error fetching app info:', error);
-                    }
-                });
-        }
-    }
-
-    handleClose = () => {
-        this.setState({
-            photo_upload_show: false,
-            photo_upload_error: false,
-            photo_upload_success: false,
-        });
-    };
-
-    handleNewPhoto = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            this.setState({
-                photo_upload_show: true,
-                photo_upload_success: true,
-            });
-        } else {
-            this.setState({
-                photo_upload_show: true,
-                photo_upload_error: true,
-            });
-        }
-    };
-
-    render() {
-        const { user, selectedUser, handleLogout } = this.props;
-        const displayName = selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}` : '';
-
-        return this.state.app_info ? (
-            <AppBar className="topbar-appBar" position="absolute">
-                <Toolbar>
-                    <Typography variant="h5" component="div" sx={{ flexGrow: 0 }} color="inherit">
-                        Group 7
-                    </Typography>
-                    <Divider orientation="vertical" flexItem />
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }} color="inherit">
-                        {user ? (
-                            <>
-                                <span>{"Hi " + user.first_name}</span>
-                                <Divider orientation="vertical" flexItem />
-                                {selectedUser ? (
-                                    <span>Photos of {displayName}</span>
-                                ) : (
-                                    <span />
-                                )}
-                            </>
-                        ) : (
-                            "Please Login"
-                        )}
-                    </Typography>
-                    <Divider orientation="vertical" flexItem />
-                    <Typography variant="h5" component="div" sx={{ flexGrow: 0 }} color="inherit">
-                        Version: {this.state.app_info.version}
-                    </Typography>
-                    <Divider orientation="vertical" flexItem />
-                    {user && (
-                        <>
-                            <Button variant="contained" onClick={handleLogout}>Logout</Button>
-                            <Divider orientation="vertical" flexItem />
-                            <Button component="label" variant="contained">
-                                Add Photo
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    hidden
-                                    onChange={this.handleNewPhoto}
-                                />
-                            </Button>
-                            <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'left' }} open={this.state.photo_upload_show} autoHideDuration={6000} onClose={this.handleClose}>
-                                {this.state.photo_upload_success ? (
-                                    <Alert onClose={this.handleClose} severity="success" sx={{ width: '100%' }}>Photo Uploaded</Alert>
-                                ) : this.state.photo_upload_error ? (
-                                    <Alert onClose={this.handleClose} severity="error" sx={{ width: '100%' }}>Error Uploading Photo</Alert>
-                                ) : null}
-                            </Snackbar>
-                        </>
-                    )}
-                </Toolbar>
-            </AppBar>
-        ) : (
-            <div />
-        );
-    }
+                .catch((err) => console.log(`Error + ${err}`));
+            }}
+          >
+            Add
+          </Button>
+        </Box>
+      </Modal>
+      <Toolbar>
+        <Box display="flex" justifyContent="space-between" width="100%" alignItems="center">
+          <Typography variant="h5" color="inherit">
+            Group 7
+          </Typography>
+          {props.user ? (
+            <>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <Typography>Hi {props?.user}!</Typography>
+                <Typography>{props?.title}</Typography>
+              </Box>
+              <Box display="flex" flexDirection="row" gap={4} alignItems="center">
+                <Link href="#/favorites" color="inherit">
+                  <Typography>My Favorites</Typography>
+                </Link>
+                <Typography>Version: {infoData?.version}</Typography>
+                <Button
+                  onClick={() => setOpenModal(true)}
+                  variant="outlined"
+                  sx={{
+                    backgroundColor: "white",
+                    "&:hover": {
+                      backgroundColor: "lightgray",
+                    },
+                  }}
+                >
+                  Add Image
+                </Button>
+                <Button
+                  onClick={logout}
+                  variant="outlined"
+                  sx={{
+                    backgroundColor: "white",
+                    "&:hover": {
+                      backgroundColor: "lightgray",
+                    },
+                  }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            </>
+          ) : (
+            <Button href="#/login-register" color="inherit">
+              Login/Register
+            </Button>
+          )}
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
 }
 
 export default TopBar;
