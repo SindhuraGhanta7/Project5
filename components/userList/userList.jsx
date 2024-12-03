@@ -1,69 +1,34 @@
-import React from 'react';
-import {
-  Divider,
-  List,
-  ListItem,
-  Typography,
-}
-from '@mui/material';
-import { Link } from 'react-router-dom';
-import './userList.css';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { List, ListItem, ListItemText } from "@mui/material";
+import "./userList.css";
+import { useHistory, Link } from "react-router-dom";
+import axios from "axios";
 
-/**
- * Define UserList, a React component of project #5
- */
-class UserList extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      users: null
-    };
-  }
+function UserList() {
+  const [userData, setUserData] = useState([]);
+  const history = useHistory();
 
-  componentDidMount() {
-    if (this.props.loggedIn) {
-      this.getUsersData();
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    // If login status changes to logged in, get the logged in user's data
-    if (this.props.loggedIn !== prevProps.loggedIn && this.props.loggedIn) {
-      this.getUsersData();
-    }
-  }
-
-  getUsersData() {
-    console.log("getUsersData", this.props.loggedIn);
-    axios.get("http://localhost:3000/user/list").then((response) => {
-      this.setState({ users: response.data });
-    });
-  }
-
-  render() {
-    return (
-      <div>
-        {this.state.users && (
-          <div> 
-            <Typography variant="h4" sx={{ borderRadius: 8, backgroundColor: '#004643', color: 'white', padding: 2, width:'30%' }}>
-              Users
-            </Typography>
-            <List component="nav" className="user-list">
-              {this.state.users.map((user) => (
-                <div key={user._id}>
-                  <ListItem className="user-list-item">
-                    <Link to={"/users/" + user._id}>{user.first_name + " " + user.last_name}</Link>
-                  </ListItem>
-                  <Divider />
-                </div>
-              ))}
-            </List>
-          </div>
-        )}
-      </div>
-    );
-  }
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/user/list/")
+      .then((res) => {
+        setUserData(res.data);
+      })
+      .catch((err) => console.log(err));
+  }, []);
+  return (
+    <div>
+      <List component="nav">
+        {userData.map((user, index) => (
+          <Link to={"/users/" + user._id} key={index} className={`main-user-list`}>
+            <ListItem onClick={() => hisotry.push("/users/" + user._id)}>
+              <ListItemText primary={`${user.first_name} ${user.last_name}`} />
+            </ListItem>
+          </Link>
+        ))}
+      </List>
+    </div>
+  );
 }
 
 export default UserList;
