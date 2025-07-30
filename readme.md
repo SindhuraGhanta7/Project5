@@ -1,6 +1,7 @@
 GROUP 7
 
 SCRUM MASTER
+
 Sindhura Ghanta
 
 ## Developers
